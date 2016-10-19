@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tartan Demo</title>
+
+  <style>
+    .editor-container {
+      margin: 30px 50px;
+      text-align: center;
+    }
+
+    .editor-container textarea {
+      border: 1px solid silver;
+      width: 802px;
+      height: 100px;
+      padding: 3px 2px;
+      box-sizing: border-box;
+      resize: vertical;
+      overflow-y: scroll;
+    }
+
+    .editor-container .editor-buttons {
+      display: inline-block;
+      width: 802px;
+      text-align: left;
+      vertical-align: top;
+      margin-top: 10px;
+    }
+
+    .canvas-container {
+      margin: 30px 50px;
+      text-align: center;
+    }
+
+    .canvas-container canvas {
+      border: 1px solid silver;
+      vertical-align: top;
+      cursor: move;
+      image-rendering: pixelated;
+      -ms-interpolation-mode: nearest-neighbor;
+    }
+
+    .formatted-sett {
+      text-align: center;
+    }
+
+    .formatted-sett pre {
+      display: inline-block;
+      width: 802px;
+      border: 1px solid silver;
+      vertical-align: top;
+      text-align: left;
+      padding: 3px 2px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="editor-container">
+    <div><textarea>r#f00 R/40 Y1 R/40 [K8 Y4] Y5 R15 R5 T4 T6 [K8 W4] W/15 K4 Y/1</textarea></div>
+    <div><div class="editor-buttons"><button type="button">Rebuild</button></div></div>
+  </div>
+  <div class="canvas-container">
+    <canvas width="800" height="450"></canvas>
+  </div>
+
+  <div class="formatted-sett">
+    <pre></pre>
+  </div>
+
+<script type="text/javascript" src="dist/tartan.js"></script>
+
+<script type="text/javascript">
+  (function() {
+    var enableTimers = false;
+
+    var canvas = document.querySelector('.canvas-container canvas');
+
+    var offset = {x: 0, y: 0};
+    var sett = {
+      weave: [2, 2],
+      warp: [],
+      weft: []
+    };
+
+    var render = tartan.render.canvas(sett);
+    var parse = tartan.parse([
+      tartan.parse.stripe(),
+      tartan.parse.color(),
+      tartan.parse.squareBraces(),
+      tartan.parse.pivot()
+    ], [
+      tartan.process.optimize()
+    ], {
+      r: '#f00',
+      k: '#000',
+      y: '#ff0',
+      w: '#fff'
+    });
+
+    var repaint = tartan.utils.repaint(function() {
+      offset = render.offset(offset).offset();
+      enableTimers && console.time('render');
+      render(canvas);
+      enableTimers && console.timeEnd('render');
+    });
+
+    // Editor
+    (function(editor, button, formatted, repaint) {
+      var renderPattern = tartan.render.pattern({}, [
+        tartan.process.unfold()
+      ], {
+        skipUnsupportedTokens: true,
+        skipInvalidColors: true
+      });
+
+      var formatPattern = tartan.render.format({});
+
+      function rebuild() {
+        enableTimers && console.time('parse');
+        try {
+          var sett = parse(editor.value);
+          var pattern = renderPattern(sett);
+        } catch(e) {
+          console.trace(e);
+        }
+        enableTimers && console.timeEnd('parse');
+
+        sett.warp = pattern;
+        sett.weft = pattern;
+        render = tartan.render.canvas(sett);
+        offset = render.offset();
+        repaint();
+
+        formatted.innerHTML = formatPattern(sett);
+      }
+
+      // Bind event listeners
+      button.addEventListener('click', rebuild);
+
+      // Initial paint
+      rebuild();
+    })(
+      document.querySelector('.editor-container textarea'),
+      document.querySelector('.editor-container button'),
+      document.querySelector('.formatted-sett pre'),
+      repaint);
+
+    // Canvas
+    (function(canvas, repaint) {
+      var drag = null;
+      canvas.addEventListener('mousedown', function(event) {
+        event = event || window.event;
+        if (event.button == 0) {
+          drag = {
+            x: event.offsetX,
+            y: event.offsetY
+          };
+          if (event.target && event.target.setCapture) {
+            // Only IE and FF
+            event.target.setCapture();
+          }
+        }
+      });
+      canvas.addEventListener('mousemove', function(event) {
+        event = event || window.event;
+        if (drag) {
+          offset.x += event.offsetX - drag.x;
+          offset.y += event.offsetY - drag.y;
+
+          drag.x = event.offsetX;
+          drag.y = event.offsetY;
+
+          repaint();
+        }
+      });
+      canvas.addEventListener('mouseup', function(event) {
+        event = event || window.event;
+        if (event.button == 0) {
+          drag = null;
+          if (document.releaseCapture) {
+            // Only IE and FF
+            document.releaseCapture();
+          }
+        }
+        repaint();
+      });
+      canvas.addEventListener('losecapture', function() {
+        // Only IE and FF
+        drag = null;
+      });
+    })(canvas, repaint);
+  })();
+</script>
+
+</body>
+</html>
