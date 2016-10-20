@@ -7,7 +7,7 @@ function parser(str, offset) {
       token: char,
       offset: offset,
       length: 1
-    }
+    };
   }
 }
 

@@ -63,6 +63,6 @@ function convertPivotsToSquareBraces(tokens, options) {
 module.exports = function(options) {
   options = _.extend({}, defaultOptions, options);
   return function(tokens) {
-    return convertPivotsToSquareBraces(tokens, options)
+    return convertPivotsToSquareBraces(tokens, options);
   };
 };

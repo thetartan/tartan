@@ -123,30 +123,38 @@ var processors = [
   matchSquareBraces
 ];
 
-function optimize(tokens) {
-  var flag = true;
+function executeProcessors(tokens, processors) {
   var temp;
+  var flag = false;
+  _.each(processors, function(processor) {
+    temp = processor(tokens);
+    // If processor returned array and it is not source array -
+    // decide that is contains modified data. Once all processors
+    // did not perform any actions - break `while` loop
+    if (_.isArray(temp) && (temp !== tokens)) {
+      tokens = temp;
+      flag = true;
+    }
+  });
+  return flag ? tokens : false;
+}
 
+function optimize(tokens) {
   tokens = _.filter(tokens, _.isObject);
 
   // Run `removeZeroWidthStripes` only once
-  temp = removeZeroWidthStripes(tokens);
+  var temp = removeZeroWidthStripes(tokens);
   if (temp) {
     tokens = temp;
   }
 
-  while (flag) {
-    flag = false;
-    _.each(processors, function(processor) {
-      temp = processor(tokens);
-      // If processor returned array and it is not source array -
-      // decide that is contains modified data. Once all processors
-      // did not perform any actions - break `while` loop
-      if (_.isArray(temp) && (temp !== tokens)) {
-        tokens = temp;
-        flag = true;
-      }
-    });
+  while (true) {
+    temp = executeProcessors(tokens, processors);
+    if (_.isArray(temp)) {
+      tokens = temp;
+    } else {
+      break;
+    }
   }
 
   return tokens;

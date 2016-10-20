@@ -9,7 +9,7 @@ function factory(processors) {
     _.each(processors, function(processor) {
       tokens = processor(tokens);
     });
-  }
+  };
 }
 
 module.exports = factory;

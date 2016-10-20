@@ -6,7 +6,7 @@ var defaultOptions = {
 };
 
 function trim(str) {
-  return str.replace(/^\s+/im, '').replace(/\s+$/im, '');
+  return str.replace(/^\s+/i, '').replace(/\s+$/i, '');
 }
 
 function render(tokens, colors, options) {
@@ -29,7 +29,7 @@ function render(tokens, colors, options) {
     .join(' ')
     .value();
 
-  tokens = tokens.replace(/\[\s/img, '[').replace(/\s\]/img, ']');
+  tokens = tokens.replace(/\[\s/ig, '[').replace(/\s\]/ig, ']');
 
   return trim(colors + '\n' + tokens);
 }
@@ -40,7 +40,7 @@ function factory(options) {
     var tokens = _.isObject(sett) ? sett.tokens : [];
     var colors = _.isObject(sett) ? sett.colors : {};
     return render(tokens, _.extend({}, colors), options);
-  }
+  };
 }
 
 module.exports = factory;

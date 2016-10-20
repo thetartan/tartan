@@ -11,13 +11,13 @@ function invalid(str, offset) {
 function spaces(str, offset) {
   // Try to capture at most 10 characters. If there are more
   // whitespaces - we'll capture them on next turn
-  var matches = /^\s+/im.exec(str.substr(offset, 10));
+  var matches = /^\s+/i.exec(str.substr(offset, 10));
   if (matches) {
     return {
       token: 'space',
       offset: offset,
       length: matches[0].length
-    }
+    };
   }
 }
 
@@ -38,7 +38,23 @@ function extractColors(tokens) {
   return {
     colors: colors,
     tokens: tokens
-  }
+  };
+}
+
+function executeParsers(str, parsers, offset, result) {
+  _.each(parsers, function(parser) {
+    var token = parser(str, offset);
+    if (_.isObject(token)) {
+      if (token.token != 'space') {
+        token.source = str;
+        result.push(token);
+      }
+      offset = token.offset + token.length;
+      return false;
+    }
+  });
+
+  return offset;
 }
 
 function factory(parsers, processors, defaultColors) {
@@ -53,18 +69,9 @@ function factory(parsers, processors, defaultColors) {
   return function(str) {
     var result = [];
     var offset = 0;
+
     while (offset < str.length) {
-      _.each(parsers, function(parser) {
-        var token = parser(str, offset);
-        if (_.isObject(token)) {
-          if (token.token != 'space') {
-            token.source = str;
-            result.push(token);
-          }
-          offset = token.offset + token.length;
-          return false;
-        }
-      });
+      offset = executeParsers(str, parsers, offset, result);
     }
 
     result = extractColors(result);

@@ -17,8 +17,8 @@ function substrNearOffset(str, offset) {
 function sourceFragmentData(source, offset, length) {
   return {
     source: source,
-    offset: parseInt(offset) || 0,
-    length: parseInt(length) || 0
+    offset: parseInt(offset, 10) || 0,
+    length: parseInt(length, 10) || 0
   };
 }
 

@@ -1,7 +1,7 @@
 'use strict';
 
-var pattern1 = /^([a-z])#([0-9a-f]{6})/im;
-var pattern2 = /^([a-z])#([0-9a-f]{3})/im;
+var pattern1 = /^([a-z])#([0-9a-f]{6})/i;
+var pattern2 = /^([a-z])#([0-9a-f]{3})/i;
 
 function parser(str, offset) {
   var matches;
@@ -17,7 +17,7 @@ function parser(str, offset) {
       color: '#' + matches[2].toLowerCase(),
       offset: offset,
       length: matches[0].length
-    }
+    };
   }
 
   matches = pattern2.exec(str);
@@ -29,7 +29,7 @@ function parser(str, offset) {
       color: '#' + matches[2].toLowerCase().replace(/./g, '$&$&'),
       offset: offset,
       length: matches[0].length
-    }
+    };
   }
 }
 

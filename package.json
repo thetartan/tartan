@@ -1,6 +1,6 @@
 {
   "name": "tartan",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Library to render tartan pattern using its textual descriptor",
   "keywords": ["tartan", "scotland"],
   "main": "index.html",

@@ -1,6 +1,8 @@
 'use strict';
 
-var pattern = /^([a-z])\/([0-9]+)/im;
+var errors = require('../errors');
+
+var pattern = /^([a-z])\/([0-9]+)/i;
 
 function parser(str, offset) {
   // Hope nobody will try to add stripe with 1e8 lines...
@@ -16,7 +18,7 @@ function parser(str, offset) {
       count: count,
       offset: offset,
       length: matches[0].length
-    }
+    };
   }
 }
 

@@ -19,11 +19,11 @@ function render(tokens, colors, options) {
         if (!options.skipUnsupportedTokens) {
           throw new errors.UnsupportedToken(token);
         } else {
-          return;
+          return null;
         }
       }
       if (token.count <= 0) {
-        return;
+        return null;
       }
       // Try to find color
       var color = colors[token.name];
@@ -31,14 +31,14 @@ function render(tokens, colors, options) {
         if (!options.skipInvalidColors) {
           throw new errors.ColorNotFound(token, colors);
         } else {
-          return;
+          return null;
         }
       }
       if (!isValidColor(color)) {
         if (!options.skipInvalidColors) {
           throw new errors.InvalidColorFormat(token, colors);
         } else {
-          return;
+          return null;
         }
       }
       return [color, token.count];
@@ -58,7 +58,7 @@ function factory(defaultColors, processors, options) {
       tokens = processor(tokens);
     });
     return render(tokens, _.extend({}, defaultColors, colors), options);
-  }
+  };
 }
 
 module.exports = factory;

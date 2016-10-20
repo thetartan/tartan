@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 var pivotsToSquareBraces = require('./pivots-to-square-braces');
 
 function mirror(tokens) {
