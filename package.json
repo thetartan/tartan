@@ -1,8 +1,13 @@
 {
   "name": "tartan",
-  "version": "1.0.0",
-  "description": "Library to render tartan pattern using its textual descritor",
+  "version": "1.0.1",
+  "description": "Library to render tartan pattern using its textual descriptor",
+  "keywords": ["tartan", "scotland"],
   "main": "index.html",
+  "engines": {
+    "node": "^4.0.0",
+    "npm": "^2.0.0"
+  },
   "scripts": {
     "start": "xdg-open index.html",
     "test": "mocha tests/*.js",
@@ -12,8 +17,18 @@
     "prepublish": "npm run build",
     "review": "eslint src"
   },
-  "author": "Levko Kravets <levko.ne@gmail.com>",
+  "author": {
+    "name": "Levko Kravets",
+    "email": "levko.ne@gmail.com"
+  },
   "license": "MIT",
+  "bugs": {
+    "url" : "https://github.com/kravets-levko/tartan/issues"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/kravets-levko/tartan.git"
+  },
   "dependencies": {
     "lodash": "^4.16.4"
   },
@@ -30,5 +45,11 @@
     "mocha": "^3.1.2",
     "raw-loader": "^0.5.1",
     "webpack": "^1.13.2"
-  }
+  },
+  "contributors": [
+    {
+      "name": "Levko Kravets",
+      "email": "levko.ne@gmail.com"
+    }
+  ]
 }
