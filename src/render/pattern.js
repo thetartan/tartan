@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var errors = require('../errors');
 var normalizeColorMap = require('../utils/normalize-color-map');
 var isValidColor = require('../utils/is-valid-color');
 
@@ -16,7 +17,7 @@ function render(tokens, colors, options) {
       // Check if we support this type of token
       if (acceptedTokens.indexOf(token.token) == -1) {
         if (!options.skipUnsupportedTokens) {
-          throw new Error('Cannot render token "' + token.token + '"');
+          throw new errors.UnsupportedToken(token);
         } else {
           return;
         }
@@ -28,14 +29,14 @@ function render(tokens, colors, options) {
       var color = colors[token.name];
       if (_.isUndefined(color)) {
         if (!options.skipInvalidColors) {
-          throw new Error('No entry in color map for "' + token.name + '"');
+          throw new errors.ColorNotFound(token, colors);
         } else {
           return;
         }
       }
       if (!isValidColor(color)) {
         if (!options.skipInvalidColors) {
-          throw new Error('Invalid color format: "' + color + '"');
+          throw new errors.InvalidColorFormat(token, colors);
         } else {
           return;
         }

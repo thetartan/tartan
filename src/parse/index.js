@@ -1,17 +1,22 @@
 'use strict';
 
 var _ = require('lodash');
+var errors = require('../errors');
 var normalizeColorMap = require('../utils/normalize-color-map');
 
-function invalid(str) {
-  throw new Error('Invalid token near "' + str + '"');
+function invalid(str, offset) {
+  throw new errors.InvalidToken(str, offset);
 }
 
-function spaces(str) {
-  if (/^\s+$/ig.test(str)) {
+function spaces(str, offset) {
+  // Try to capture at most 10 characters. If there are more
+  // whitespaces - we'll capture them on next turn
+  var matches = /^\s+/im.exec(str.substr(offset, 10));
+  if (matches) {
     return {
-      offset: 0,
-      length: str.length
+      token: 'space',
+      offset: offset,
+      length: matches[0].length
     }
   }
 }
@@ -38,8 +43,8 @@ function extractColors(tokens) {
 
 function factory(parsers, processors, defaultColors) {
   parsers = _.filter(parsers, _.isFunction);
-  parsers.push(spaces);
-  parsers.push(invalid);
+  parsers.splice(0, 0, spaces); // Prepend this parser to skip spaces
+  parsers.push(invalid); // This parser will handle invalid tokens
 
   processors = _.filter(processors, _.isFunction);
 
@@ -47,12 +52,16 @@ function factory(parsers, processors, defaultColors) {
 
   return function(str) {
     var result = [];
-    while (str != '') {
+    var offset = 0;
+    while (offset < str.length) {
       _.each(parsers, function(parser) {
-        var token = parser(str);
+        var token = parser(str, offset);
         if (_.isObject(token)) {
-          result.push(token);
-          str = str.substr(token.offset + token.length, str.length);
+          if (token.token != 'space') {
+            token.source = str;
+            result.push(token);
+          }
+          offset = token.offset + token.length;
           return false;
         }
       });

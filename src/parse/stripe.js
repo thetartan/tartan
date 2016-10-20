@@ -1,19 +1,22 @@
 'use strict';
 
-var pattern = /^\s*([a-z]+)([0-9]+)/im;
+var errors = require('../errors');
 
-function parser(str) {
-  var matches = pattern.exec(str);
+var pattern = /^([a-z])([0-9]+)/im;
+
+function parser(str, offset) {
+  // Hope nobody will try to add stripe with 1e9 lines...
+  var matches = pattern.exec(str.substr(offset, 10));
   if (matches) {
     var count = parseInt(matches[2], 10) || 0;
     if (count <= 0) {
-      throw new Error('Zero-width stripe at "' + str + '"');
+      throw new errors.ZeroWidthStripe(str, offset, matches[0].length);
     }
     return {
       token: 'stripe',
       name: matches[1].toUpperCase(),
       count: count,
-      offset: matches.index,
+      offset: offset,
       length: matches[0].length
     }
   }

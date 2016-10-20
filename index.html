@@ -109,7 +109,9 @@
     // Editor
     (function(editor, button, formatted, repaint) {
       var renderPattern = tartan.render.pattern({}, [
-        tartan.process.unfold()
+        tartan.process.unfold({
+          skipOrphanedPivots: true
+        })
       ], {
         skipUnsupportedTokens: true,
         skipInvalidColors: true
@@ -123,7 +125,11 @@
           var sett = parse(editor.value);
           var pattern = renderPattern(sett);
         } catch(e) {
-          console.trace(e);
+          if (e.data) {
+            console.log(e);
+            console.dir(e.data);
+          }
+          return;
         }
         enableTimers && console.timeEnd('parse');
 

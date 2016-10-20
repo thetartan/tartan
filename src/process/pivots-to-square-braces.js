@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var errors = require('../errors');
 
 var defaultOptions = {
   skipOrphanedPivots: false
@@ -8,7 +9,7 @@ var defaultOptions = {
 
 function checkOrphanedPivotError(options, token) {
   if (!options.skipOrphanedPivots && token) {
-    throw new Error('Orphaned pivot at ' + token.offset);
+    throw new errors.OrphanedPivot(token);
   }
 }
 
