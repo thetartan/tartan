@@ -8,13 +8,7 @@ var developmentConfig = {
   output: {
     filename: 'tartan.js',
     path: './dist'
-  },
-  plugins:  [
-    new webpack.optimize.OccurenceOrderPlugin(),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('development')
-    })
-  ]
+  }
 };
 
 var config = _.merge({}, baseConfig, developmentConfig);
