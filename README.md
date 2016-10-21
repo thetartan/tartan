@@ -3,7 +3,7 @@
 This is javascript library that allows 
 to parse, validate and render tartan 
 patterns. See also article in 
-[Wiki](https://en.wikipedia.org/wiki/Tartan).
+[Wikipedia](https://en.wikipedia.org/wiki/Tartan).
 Library is distributed under the 
 [MIT license](LICENSE).
 
