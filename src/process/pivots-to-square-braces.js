@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var utils = require('./utils');
 var errors = require('../errors');
 
 var defaultOptions = {
@@ -13,18 +14,6 @@ function checkOrphanedPivotError(options, token) {
   }
 }
 
-function squareBrace(token) {
-  return {
-    token: token
-  };
-}
-
-function pivotToStripe(token) {
-  token = _.clone(token);
-  token.token = 'stripe';
-  return token;
-}
-
 function convertPivotsToSquareBraces(tokens, options) {
   var result = [];
   var i;
@@ -33,14 +22,14 @@ function convertPivotsToSquareBraces(tokens, options) {
 
   for (i = 0; i < tokens.length; i++) {
     token = tokens[i];
-    if (token.token == 'pivot') {
+    if (utils.isPivot(token)) {
       if (!open) {
-        result.push(squareBrace('['));
-        result.push(pivotToStripe(token));
+        result.push(utils.squareBrace('['));
+        result.push(utils.pivotToStripe(token));
         open = token;
       } else {
-        result.push(pivotToStripe(token));
-        result.push(squareBrace(']'));
+        result.push(utils.pivotToStripe(token));
+        result.push(utils.squareBrace(']'));
         open = null;
       }
       // Go to next iteration - we already added tokens that we needed

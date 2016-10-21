@@ -1,27 +1,10 @@
 'use strict';
 
 var _ = require('lodash');
-var errors = require('../errors');
-var normalizeColorMap = require('../utils/normalize-color-map');
+var whitespace = require('./whitespace');
+var invalid = require('./invalid');
 
-function invalid(str, offset) {
-  throw new errors.InvalidToken(str, offset);
-}
-
-function spaces(str, offset) {
-  // Try to capture at most 10 characters. If there are more
-  // whitespaces - we'll capture them on next turn
-  var matches = /^\s+/i.exec(str.substr(offset, 10));
-  if (matches) {
-    return {
-      token: 'space',
-      offset: offset,
-      length: matches[0].length
-    };
-  }
-}
-
-function extractColors(tokens) {
+function splitColorsAndTokens(tokens) {
   var colors = {};
 
   tokens = _.chain(tokens)
@@ -41,14 +24,28 @@ function extractColors(tokens) {
   };
 }
 
+function appendToken(tokens, token) {
+  var canBeMerged = ['whitespace', 'invalid'];
+  if (canBeMerged.indexOf(token.token) >= 0) {
+    var last = _.last(tokens);
+    if (last && (canBeMerged.indexOf(last.token) >= 0)) {
+      if (last.token == token.token) {
+        last.value += token.value;
+        last.length += token.length;
+        return;
+      }
+    }
+  }
+  tokens.push(token);
+}
+
 function executeParsers(str, parsers, offset, result) {
   _.each(parsers, function(parser) {
     var token = parser(str, offset);
     if (_.isObject(token)) {
-      if (token.token != 'space') {
-        token.source = str;
-        result.push(token);
-      }
+      token.offset = token.offset || offset;
+      token.source = str;
+      appendToken(result, token);
       offset = token.offset + token.length;
       return false;
     }
@@ -57,14 +54,12 @@ function executeParsers(str, parsers, offset, result) {
   return offset;
 }
 
-function factory(parsers, processors, defaultColors) {
+function factory(parsers, processors, options) {
   parsers = _.filter(parsers, _.isFunction);
-  parsers.splice(0, 0, spaces); // Prepend this parser to skip spaces
-  parsers.push(invalid); // This parser will handle invalid tokens
+  parsers.splice(0, 0, whitespace()); // Prepend this parser to skip spaces
+  parsers.push(invalid(options)); // This parser will handle invalid tokens
 
   processors = _.filter(processors, _.isFunction);
-
-  defaultColors = normalizeColorMap(defaultColors);
 
   return function(str) {
     var result = [];
@@ -74,9 +69,7 @@ function factory(parsers, processors, defaultColors) {
       offset = executeParsers(str, parsers, offset, result);
     }
 
-    result = extractColors(result);
-
-    result.colors = _.extend({}, defaultColors, result.colors);
+    result = splitColorsAndTokens(result);
 
     _.each(processors, function(processor) {
       result.tokens = processor(result.tokens);

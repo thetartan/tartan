@@ -1,6 +1,8 @@
 'use strict';
 
 var _ = require('lodash');
+var utils = require('./utils');
+var removeTokens = require('./remove-tokens');
 
 function makeProcessorResult(result, modifiedFlag) {
   // If we did something - return modified tokens, otherwise return false
@@ -66,9 +68,9 @@ function removeEmptySquareBraces(tokens) {
 
   for (i = 0; i < tokens.length; i++) {
     current = tokens[i];
-    if (current.token == '[') {
+    if (utils.isOpenSquareBrace(current)) {
       next = tokens[i + 1];
-      if (next && (next.token == ']')) {
+      if (utils.isCloseSquareBrace(next)) {
         i += 2;
         flag = true;
         continue;
@@ -88,10 +90,10 @@ function matchSquareBraces(tokens) {
 
   for (i = 0; i < tokens.length; i++) {
     current = tokens[i];
-    if (current.token == '[') {
+    if (utils.isOpenSquareBrace(current)) {
       balance++;
     }
-    if (current.token == ']') {
+    if (utils.isCloseSquareBrace(current)) {
       balance--;
     }
   }
@@ -101,16 +103,12 @@ function matchSquareBraces(tokens) {
   }
 
   while (balance < 0) {
-    result.push({
-      token: '['
-    });
+    result.push(utils.squareBrace('['));
     balance++;
   }
   [].push.apply(result, tokens);
   while (balance > 0) {
-    result.push({
-      token: ']'
-    });
+    result.push(utils.squareBrace(']'));
     balance--;
   }
 
@@ -118,6 +116,7 @@ function matchSquareBraces(tokens) {
 }
 
 var processors = [
+  removeTokens(['whitespace', 'invalid']),
   removeEmptySquareBraces,
   mergeColors,
   matchSquareBraces

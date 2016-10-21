@@ -93,10 +93,7 @@
     ], [
       tartan.process.optimize()
     ], {
-      r: '#f00',
-      k: '#000',
-      y: '#ff0',
-      w: '#fff'
+      failOnInvalidTokens: false
     });
 
     var repaint = tartan.utils.repaint(function() {
@@ -108,7 +105,7 @@
 
     // Editor
     (function(editor, button, formatted, repaint) {
-      var renderPattern = tartan.render.pattern({}, [
+      var renderPattern = tartan.render.pattern([
         tartan.process.unfold({
           skipOrphanedPivots: true
         })
@@ -117,7 +114,9 @@
         skipInvalidColors: true
       });
 
-      var formatPattern = tartan.render.format({});
+      var formatPattern = tartan.render.format({
+        outputOnlyUsedColors: true
+      });
 
       function rebuild() {
         enableTimers && console.time('parse');
@@ -125,8 +124,8 @@
           var sett = parse(editor.value);
           var pattern = renderPattern(sett);
         } catch(e) {
+          console.log(e);
           if (e.data) {
-            console.log(e);
             console.dir(e.data);
           }
           return;

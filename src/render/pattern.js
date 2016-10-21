@@ -2,12 +2,14 @@
 
 var _ = require('lodash');
 var errors = require('../errors');
-var normalizeColorMap = require('../utils/normalize-color-map');
+var defaults = require('../defaults');
+var utils = require('../utils');
 var isValidColor = require('../utils/is-valid-color');
 
 var defaultOptions = {
   skipUnsupportedTokens: false,
-  skipInvalidColors: false
+  skipInvalidColors: false,
+  defaultColors: defaults.colors
 };
 
 function render(tokens, colors, options) {
@@ -47,9 +49,8 @@ function render(tokens, colors, options) {
     .value();
 }
 
-function factory(defaultColors, processors, options) {
+function factory(processors, options) {
   processors = _.filter(processors, _.isFunction);
-  defaultColors = normalizeColorMap(defaultColors);
   options = _.extend({}, defaultOptions, options);
   return function(sett) {
     var tokens = _.isObject(sett) ? sett.tokens : [];
@@ -57,7 +58,11 @@ function factory(defaultColors, processors, options) {
     _.each(processors, function(processor) {
       tokens = processor(tokens);
     });
-    return render(tokens, _.extend({}, defaultColors, colors), options);
+
+    colors = utils.normalizeColorMap(
+      _.extend({}, options.defaultColors, colors));
+
+    return render(tokens, colors, options);
   };
 }
 

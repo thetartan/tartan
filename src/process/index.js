@@ -16,4 +16,5 @@ module.exports = factory;
 
 module.exports.optimize = require('./optimize');
 module.exports.unfold = require('./unfold');
+module.exports.removeTokens = require('./remove-tokens');
 module.exports.pivotsToSquareBraces = require('./pivots-to-square-braces');

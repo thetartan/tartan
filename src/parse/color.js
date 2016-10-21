@@ -15,7 +15,6 @@ function parser(str, offset) {
       token: 'color',
       name: matches[1].toUpperCase(),
       color: '#' + matches[2].toLowerCase(),
-      offset: offset,
       length: matches[0].length
     };
   }
@@ -27,7 +26,6 @@ function parser(str, offset) {
       name: matches[1].toUpperCase(),
       // Duplicate each char
       color: '#' + matches[2].toLowerCase().replace(/./g, '$&$&'),
-      offset: offset,
       length: matches[0].length
     };
   }

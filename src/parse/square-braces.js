@@ -4,8 +4,8 @@ function parser(str, offset) {
   var char = str.charAt(offset);
   if ((char == '[') || (char == ']')) {
     return {
-      token: char,
-      offset: offset,
+      token: 'square-brace',
+      value: char,
       length: 1
     };
   }

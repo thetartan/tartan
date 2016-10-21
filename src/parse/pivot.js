@@ -16,7 +16,6 @@ function parser(str, offset) {
       token: 'pivot',
       name: matches[1].toUpperCase(),
       count: count,
-      offset: offset,
       length: matches[0].length
     };
   }

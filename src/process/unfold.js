@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var utils = require('./utils');
 
 var pivotsToSquareBraces = require('./pivots-to-square-braces');
 
@@ -18,10 +19,10 @@ function tryUnfold(tokens) {
 
   for (i = 0; i < tokens.length; i++) {
     token = tokens[i];
-    if (token.token == '[') {
+    if (utils.isOpenSquareBrace(token)) {
       from = i;
     }
-    if (token.token == ']') {
+    if (utils.isCloseSquareBrace(token)) {
       if (from >= 0) {
         return tokens.slice(0, from).concat(
           mirror(tokens.slice(from + 1, i)),
