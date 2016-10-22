@@ -1,5 +1,9 @@
 # Syntax
 
+For details about supported syntax constructions please refer to 
+[API documentation](api/parsing.md) as API is modular and configurable, 
+so actual parser can support or not support some features depending on it's code. 
+
 ## Basic syntax
 
 ### Threadcount
@@ -82,12 +86,12 @@ allows to use some extended markup that should make
 a tartan development process simpler. Anyway, 
 all basic syntax is supported.
 
-### Color codes
+### Color map
 
 This extension allows to define colors directly within 
-threadcount description. Syntax: `<latin letter><html color definition>`.
+threadcount description. Syntax: `<latin letters>[=]<html color definition>;`.
 `<html color definition>` should start with `#` character 
-followed by three or six hexadecimal letters. Examples: `R#f00`, `T#603311`.
+followed by three or six hexadecimal letters. Examples: `R#f00;`, `T=#603311;`.
 
 ### Reflections
     

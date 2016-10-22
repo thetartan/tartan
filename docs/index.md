@@ -1,14 +1,11 @@
 # Tartan docs
 
-This is index file for docs. Please refer to 
-table of contents for available articles:
 
-- [Syntax](syntax.md)
+**Table of contents:**
 
-- Api reference
-
-  - [Parsing](parse.md)
-   
-  - [Processing](process.md)
-   
-  - [Rendering](render.md) 
+* [Syntax](syntax.md)
+* [API reference](api/index.md):
+  * [Parsing](api/parsing/index.md)   
+  * [Processing](api/processing/index.md)   
+  * [Rendering](api/rendering/index.md)
+  * [Examples](api/examples/index.md) 
