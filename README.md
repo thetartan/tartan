@@ -21,4 +21,4 @@ To use library in your projects, run
  your favorite browser to see live example
  of some features of this library. For
  more usage examples and API reference
- see [docs](docs/index.md).
+ see the [docs](docs/index.md).

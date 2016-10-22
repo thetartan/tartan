@@ -17,7 +17,7 @@ the loom accurately. For example
 ``` 
 B24 W4 B24 R2 K24 G24 W2
 ``` 
-Means 24 threads of B (blue) followed by 4 threads of 
+means 24 threads of B (blue) followed by 4 threads of 
 W (white), 24 threads of B (blue), 2 threads of 
 R (red), 24 threads of K (black), 24 threads of 
 G (green), and another 2 threads of W (white).
@@ -50,7 +50,9 @@ of the first half.
 To show that the threadcount is for a symmetrical/reflective 
 tartan, the pivot points include a slash (/) between 
 the letter and number of threads. For example 
-`B/24 W4 B24 R2 K24 G24 W/2`.
+```
+B/24 W4 B24 R2 K24 G24 W/2
+```
 
 ### Asymmetrical/repeating setts
 Where the pattern does not reflect it is known as 
@@ -88,7 +90,7 @@ threadcount description. Syntax: `<latin letter><html color definition>`.
 followed by three or six hexadecimal letters. Examples: `R#f00`, `T#603311`.
 
 ### Reflections
-
+    
 This extension allows to highlight blocks that should be 
 reflected (like with pivots markup described above). But 
 while basic syntax allows only to reflect entire threadcount, 
@@ -96,7 +98,7 @@ square braces can define as much reflective blocks as you wish.
 For example: `B/24 W4 B24 R2 G24 K24 W2 K24 G/24` can be 
 changed to `[B24 W4 B24 R2 G24 K24 W2 K24 G24]` and another way to 
 describe it: `[[B24 W4] R2 [G24 K24 W2]]` - `[B24 W24]` will be 
-expanded to `[B24 W24 B24]` and `[G24 K24 W2]` will be expanded to 
+expanded to `B24 W24 B24` and `[G24 K24 W2]` will be expanded to 
 `G24 K24 W2 K24 G24`.
 
 ## References
