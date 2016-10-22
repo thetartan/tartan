@@ -1,10 +1,8 @@
 'use strict';
 
 var _ = require('lodash');
-
-var defaultOptions = {
-  weave: [2, 2]
-};
+var defaults = require('../defaults');
+var rendering = require('./index');
 
 function renderWarp(context, options) {
   var pattern = options.warp.pattern;
@@ -90,13 +88,14 @@ function renderWeft(context, options) {
 }
 
 function prepareWeave(weave, defaultWeave) {
-  return _.isArray(weave) && weave.length > 0 ? weave : defaultWeave;
+  return _.isArray(weave) && weave.length == 2 ? weave : defaultWeave;
 }
 
 function preparePattern(pattern, weave) {
   pattern = _.filter(pattern, function(item) {
     return _.isArray(item) && (item.length >= 2) && (item[1] > 0);
   });
+
   var lengthOfPattern = _.reduce(pattern, function(result, item) {
     return result + item[1];
   }, 0);
@@ -141,18 +140,31 @@ function prepareOffset(offset, warp, weft) {
   };
 }
 
-function factory(options) {
-  var weave = prepareWeave(options.weave, defaultOptions.weave);
-  var warp = preparePattern(options.warp, weave);
-  var weft = preparePattern(options.weft, weave);
+function chooseFirstArray() {
+  return _.find(arguments, _.isArray) || [];
+}
+
+function renderEmpty() {
+  return {x: 0, y: 0};
+}
+
+function factory(sett, options, process) {
+  if (!_.isObject(sett)) {
+    return renderEmpty;
+  }
+  sett = rendering.pattern(sett, options, process)();
+
+  var weave = prepareWeave(sett.weave, defaults.weave.serge);
+  var warp = preparePattern(chooseFirstArray(sett.warp, sett.weft), weave);
+  var weft = preparePattern(chooseFirstArray(sett.weft, sett.warp), weave);
 
   if ((warp.length == 0) && (weft.length == 0)) {
-    return _.identity;
+    return renderEmpty;
   }
 
-  var offset = prepareOffset({}, warp, weft);
+  return function(canvas, offset) {
+    offset = prepareOffset(offset, warp, weft);
 
-  var result = function(canvas) {
     var options = {
       warp: warp,
       weft: weft,
@@ -166,25 +178,9 @@ function factory(options) {
       renderWarp(context, options);
       renderWeft(context, options);
     }
-  };
 
-  result.offset = function(x, y) {
-    switch (arguments.length) {
-      case 0:
-        return offset;
-      case 1:
-        offset = prepareOffset(x, warp, weft);
-        break;
-      default:
-        offset = prepareOffset({x: x, y: y}, warp, weft);
-        break;
-    }
-    return this;
+    return offset;
   };
-
-  return result;
 }
 
-module.exports = function(options) {
-  return factory(_.extend({}, defaultOptions, options));
-};
+module.exports = factory;

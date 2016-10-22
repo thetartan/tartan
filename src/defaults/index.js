@@ -2,6 +2,11 @@
 
 var utils = require('../utils');
 
+module.exports.weave = {
+  plain: [1, 1],
+  serge: [2, 2]
+};
+
 module.exports.colors = utils.normalizeColorMap({
   B: '#304080',
   G: '#004c00',
@@ -12,3 +17,8 @@ module.exports.colors = utils.normalizeColorMap({
   W: '#ffffff',
   Y: '#ffe600'
 });
+
+module.exports.insignificantTokens = [
+  utils.TokenType.invalid,
+  utils.TokenType.whitespace
+];

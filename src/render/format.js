@@ -6,7 +6,7 @@ var utils = require('../utils');
 var defaultOptions = {
   formatter: {
     color: function(token) {
-      return token.name + token.color;
+      return token.name + token.color + ';';
     },
     stripe: function(token) {
       return token.name + token.count;
@@ -27,9 +27,8 @@ function trim(str) {
 
 function getOnlyUsedColors(tokens, colors) {
   var result = {};
-  var supportedTokens = ['stripe', 'pivot'];
   _.each(tokens, function(token) {
-    if (_.isObject(token) && (supportedTokens.indexOf(token.token) >= 0)) {
+    if (utils.isStripe(token) || utils.isPivot(token)) {
       if (colors[token.name]) {
         result[token.name] = colors[token.name];
       }
@@ -40,22 +39,15 @@ function getOnlyUsedColors(tokens, colors) {
 
 function colorsAsTokens(colors, options) {
   return _.chain(utils.normalizeColorMap(colors))
-    .map(function(value, key) {
-      return {
-        token: 'color',
-        name: key,
-        color: value,
-        offset: 0,
-        length: 8,
-        source: key + value
-      };
+    .map(function(value, name) {
+      return utils.newTokenColor(name, value);
     })
     .sortBy('name')
     .value();
 }
 
 function renderTokens(tokens, options) {
-  return _.chain(tokens)
+  return trim(_.chain(tokens)
     .map(function(token) {
       var formatter = options.formatter[token.token];
       if (!_.isFunction(formatter)) {
@@ -65,22 +57,42 @@ function renderTokens(tokens, options) {
     })
     .filter()
     .join(' ')
-    .value();
+    .replace(/\s\]/ig, ']')
+    .value());
 }
 
-function render(tokens, colors, options) {
+function render(warp, weft, colors, options) {
   if (options.outputOnlyUsedColors) {
-    colors = getOnlyUsedColors(tokens, colors);
+    colors = _.extend({},
+      getOnlyUsedColors(warp, colors),
+      getOnlyUsedColors(weft, colors)
+    );
   }
   colors = renderTokens(colorsAsTokens(colors), options);
 
-  tokens = renderTokens(tokens, options);
-  tokens = tokens.replace(/\[\s/ig, '[').replace(/\s\]/ig, ']');
+  warp = renderTokens(warp, options);
+  weft = renderTokens(weft, options);
 
-  return trim(colors + '\n' + tokens);
+  if (weft == warp) {
+    weft = '';
+  }
+
+  return trim(colors + '\n' + warp + '\n' + weft);
 }
 
-function factory(options) {
+function renderEmpty() {
+  return '';
+}
+
+function factory(sett, options, process) {
+  if (!_.isObject(sett)) {
+    return renderEmpty;
+  }
+  if (_.isFunction(process)) {
+    sett = process(sett);
+  }
+  var colors = _.extend({}, sett.colors);
+
   options = _.merge({}, defaultOptions, options);
   if (!_.isFunction(options.defaultFormatter)) {
     options.defaultFormatter = defaultOptions.defaultFormatter;
@@ -96,10 +108,14 @@ function factory(options) {
     .fromPairs()
     .value();
 
-  return function(sett) {
-    var tokens = _.isObject(sett) ? sett.tokens : [];
-    var colors = _.isObject(sett) ? sett.colors : {};
-    return render(tokens, _.extend({}, colors), options);
+  var result = null;
+  return function() {
+    // We can cache result as we assume that sett will not change
+    // (since sett is argument for factory, not renderer)
+    if (result === null) {
+      result = render(sett.warp, sett.weft, colors, options);
+    }
+    return result;
   };
 }
 

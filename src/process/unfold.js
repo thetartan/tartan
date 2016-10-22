@@ -1,31 +1,31 @@
 'use strict';
 
 var _ = require('lodash');
-var utils = require('./utils');
+var process = require('./index');
+var processingUtils = require('./utils');
+var utils = require('../utils');
 
-var pivotsToSquareBraces = require('./pivots-to-square-braces');
-
-function mirror(tokens) {
+function reflect(tokens) {
   var result = _.clone(tokens);
   tokens = tokens.slice(0, tokens.length - 1);
   [].push.apply(result, tokens.reverse());
   return result;
 }
 
-function tryUnfold(tokens) {
+function unfold(tokens) {
   var i;
   var token;
   var from = -1;
 
   for (i = 0; i < tokens.length; i++) {
     token = tokens[i];
-    if (utils.isOpenSquareBrace(token)) {
+    if (utils.isOpeningSquareBracket(token)) {
       from = i;
     }
-    if (utils.isCloseSquareBrace(token)) {
+    if (utils.isClosingSquareBracket(token)) {
       if (from >= 0) {
         return tokens.slice(0, from).concat(
-          mirror(tokens.slice(from + 1, i)),
+          reflect(tokens.slice(from + 1, i)),
           tokens.slice(i + 1, tokens.length));
       }
     }
@@ -34,25 +34,28 @@ function tryUnfold(tokens) {
   return false;
 }
 
-function unfold(tokens) {
-  var temp;
-
+function processTokens(tokens) {
+  var wasModified = false;
   while (true) {
-    temp = tryUnfold(tokens);
+    var temp = unfold(tokens);
     if (_.isArray(temp)) {
       tokens = temp;
+      wasModified = true;
     } else {
       break;
     }
   }
 
-  return tokens;
+  return processingUtils.makeProcessorResult(tokens, wasModified);
 }
 
-module.exports = function(options) {
-  var convertPivotsToSquareBraces = pivotsToSquareBraces(options);
+function factory(options) {
+  return processingUtils.createSimpleProcessor(function(tokens, sett) {
+    return processTokens(tokens);
+  }, process([
+    // Preprocessors
+    process.pivotsToSquareBrackets(options)
+  ]));
+}
 
-  return function(tokens) {
-    return unfold(convertPivotsToSquareBraces(tokens));
-  };
-};
+module.exports = factory;

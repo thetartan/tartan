@@ -1,35 +1,20 @@
 'use strict';
 
 var _ = require('lodash');
+var utils = require('../utils');
+var defaults = require('../defaults');
 var whitespace = require('./whitespace');
 var invalid = require('./invalid');
 
-function splitColorsAndTokens(tokens) {
-  var colors = {};
-
-  tokens = _.chain(tokens)
-    .map(function(token) {
-      if (token.token == 'color') {
-        colors[token.name] = token.color;
-        return null;
-      }
-      return token;
-    })
-    .filter()
-    .value();
-
-  return {
-    colors: colors,
-    tokens: tokens
-  };
+function canBeMerged(token) {
+  return utils.isInvalid(token) || utils.isWhitespace(token);
 }
 
 function appendToken(tokens, token) {
-  var canBeMerged = ['whitespace', 'invalid'];
-  if (canBeMerged.indexOf(token.token) >= 0) {
+  if (canBeMerged(token)) {
     var last = _.last(tokens);
-    if (last && (canBeMerged.indexOf(last.token) >= 0)) {
-      if (last.token == token.token) {
+    if (last && canBeMerged(last)) {
+      if (last.type == token.type) {
         last.value += token.value;
         last.length += token.length;
         return;
@@ -54,26 +39,28 @@ function executeParsers(str, parsers, offset, result) {
   return offset;
 }
 
-function factory(parsers, processors, options) {
+function factory(parsers, options, process) {
   parsers = _.filter(parsers, _.isFunction);
   parsers.splice(0, 0, whitespace()); // Prepend this parser to skip spaces
   parsers.push(invalid(options)); // This parser will handle invalid tokens
 
-  processors = _.filter(processors, _.isFunction);
-
   return function(str) {
-    var result = [];
+    var tokens = [];
     var offset = 0;
+    var result = {
+      weave: defaults.weave.serge,
+      colors: []
+    };
 
     while (offset < str.length) {
-      offset = executeParsers(str, parsers, offset, result);
+      offset = executeParsers(str, parsers, offset, tokens);
     }
 
-    result = splitColorsAndTokens(result);
+    result.warp = tokens;
 
-    _.each(processors, function(processor) {
-      result.tokens = processor(result.tokens);
-    });
+    if (_.isFunction(process)) {
+      result = process(result);
+    }
 
     return result;
   };
@@ -84,4 +71,4 @@ module.exports = factory;
 module.exports.color = require('./color');
 module.exports.stripe = require('./stripe');
 module.exports.pivot = require('./pivot');
-module.exports.squareBraces = require('./square-braces');
+module.exports.squareBrackets = require('./square-brackets');

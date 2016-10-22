@@ -4,7 +4,6 @@ var _ = require('lodash');
 var errors = require('../errors');
 var defaults = require('../defaults');
 var utils = require('../utils');
-var isValidColor = require('../utils/is-valid-color');
 
 var defaultOptions = {
   skipUnsupportedTokens: false,
@@ -12,57 +11,95 @@ var defaultOptions = {
   defaultColors: defaults.colors
 };
 
+function isSupportedToken(token) {
+  return utils.isStripe(token) || utils.isPivot(token);
+}
+
+function getThreadCount(token, options) {
+  // Check if we support this type of token
+  if (!isSupportedToken(token)) {
+    if (!options.skipUnsupportedTokens) {
+      throw new errors.UnsupportedToken(token);
+    } else {
+      return 0;
+    }
+  }
+  return token.count;
+}
+
+function getColor(token, colors, options) {
+  // Try to find color
+  var color = colors[token.name];
+  if (_.isUndefined(color)) {
+    if (!options.skipInvalidColors) {
+      throw new errors.ColorNotFound(token, colors);
+    } else {
+      return null;
+    }
+  }
+  if (!utils.isValidColor(color)) {
+    if (!options.skipInvalidColors) {
+      throw new errors.InvalidColorFormat(token, colors);
+    } else {
+      return null;
+    }
+  }
+  return color;
+}
+
 function render(tokens, colors, options) {
-  var acceptedTokens = ['stripe', 'pivot'];
   return _.chain(tokens)
     .map(function(token) {
-      // Check if we support this type of token
-      if (acceptedTokens.indexOf(token.token) == -1) {
-        if (!options.skipUnsupportedTokens) {
-          throw new errors.UnsupportedToken(token);
-        } else {
-          return null;
-        }
-      }
-      if (token.count <= 0) {
+      var count = getThreadCount(token, options);
+      if (count <= 0) {
         return null;
       }
-      // Try to find color
-      var color = colors[token.name];
-      if (_.isUndefined(color)) {
-        if (!options.skipInvalidColors) {
-          throw new errors.ColorNotFound(token, colors);
-        } else {
-          return null;
-        }
+
+      var color = getColor(token, colors, options);
+      if (!color) {
+        return null;
       }
-      if (!isValidColor(color)) {
-        if (!options.skipInvalidColors) {
-          throw new errors.InvalidColorFormat(token, colors);
-        } else {
-          return null;
-        }
-      }
-      return [color, token.count];
+
+      return [color, count];
     })
     .filter()
     .value();
 }
 
-function factory(processors, options) {
-  processors = _.filter(processors, _.isFunction);
+function renderEmpty() {
+  return {};
+}
+
+function factory(sett, options, process) {
+  if (!_.isObject(sett)) {
+    return renderEmpty;
+  }
+  if (_.isFunction(process)) {
+    sett = process(sett);
+  }
+
   options = _.extend({}, defaultOptions, options);
-  return function(sett) {
-    var tokens = _.isObject(sett) ? sett.tokens : [];
-    var colors = _.isObject(sett) ? sett.colors : {};
-    _.each(processors, function(processor) {
-      tokens = processor(tokens);
-    });
+  var colors = _.extend({}, options.defaultColors, sett.colors);
 
-    colors = utils.normalizeColorMap(
-      _.extend({}, options.defaultColors, colors));
+  var result = null;
+  return function() {
+    // We can cache result as we assume that sett will not change
+    // (since sett is argument for factory, not renderer)
+    if (result === null) {
+      result = _.clone(sett);
+      if (sett.warp) {
+        result.warp = render(sett.warp, colors, options);
+      }
+      if (sett.weft) {
+        if (sett.weft !== sett.warp) {
+          result.weft = render(sett.weft, colors, options);
+        } else {
+          result.weft = result.warp;
+        }
+      }
+    }
 
-    return render(tokens, colors, options);
+    return result;
   };
 }
 

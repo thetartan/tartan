@@ -1,28 +1,43 @@
 'use strict';
 
 var _ = require('lodash');
+var defaults = require('../defaults');
+var processingUtils = require('./utils');
 
-function needToRemove(token, tokensToRemove) {
-  if (!_.isObject(token)) {
-    return true;
+function createPredicate(typesOrPredicate) {
+  // Predicate should return `true` if token should be removed from list
+  if (_.isFunction(typesOrPredicate)) {
+    return typesOrPredicate;
   }
-  return tokensToRemove.indexOf(token.token) >= 0;
+  if (!_.isArray(typesOrPredicate)) {
+    typesOrPredicate = defaults.insignificantTokens;
+  }
+  return function(token) {
+    return _.isObject(token) ? typesOrPredicate.indexOf(token.type) >= 0 : true;
+  };
 }
 
-module.exports = function(tokensToRemove) {
-  tokensToRemove = _.isArray(tokensToRemove) ? tokensToRemove :
-    [tokensToRemove];
-  return function(tokens) {
-    var wasSomethingRemoved = false;
-    var result = _.filter(tokens, function(token) {
-      var flag = needToRemove(token, tokensToRemove);
-      if (flag) {
-        wasSomethingRemoved = true;
-        return false;
-      }
-      return true;
-    });
+function processTokens(tokens, predicate) {
+  if (!_.isArray(tokens)) {
+    return false;
+  }
+  var wasModified = false;
+  var result = _.filter(tokens, function(token) {
+    if (predicate(token)) {
+      wasModified = true;
+      return false;
+    }
+    return true;
+  });
 
-    return wasSomethingRemoved ? result : tokens;
-  };
-};
+  return processingUtils.makeProcessorResult(result, wasModified);
+}
+
+function factory(typesOrPredicate) {
+  var predicate = createPredicate(typesOrPredicate);
+  return processingUtils.createSimpleProcessor(function(tokens, sett) {
+    return processTokens(tokens, predicate);
+  });
+}
+
+module.exports = factory;

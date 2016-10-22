@@ -2,37 +2,53 @@
 
 var _ = require('lodash');
 
-function isOpenSquareBrace(token) {
-  return _.isObject(token) &&
-    (token.token == 'square-brace') && (token.value == '[');
+// Function to check processor's return value
+function isValueChanged(oldValue, newValue) {
+  return _.isObject(newValue) && (newValue !== oldValue);
 }
 
-function isCloseSquareBrace(token) {
-  return _.isObject(token) &&
-    (token.token == 'square-brace') && (token.value == ']');
+function makeProcessorResult(result, modifiedFlag) {
+  // If we did something - return modified tokens, otherwise return false
+  return modifiedFlag ? result : false;
 }
 
-function squareBrace(value) {
-  return {
-    token: 'square-brace',
-    value: value,
-    offset: -1,
-    length: 1
+function createSimpleProcessor(processTokens, preprocess, postprocess) {
+  return function(sett) {
+    if (_.isObject(sett)) {
+      if (_.isFunction(preprocess)) {
+        sett = preprocess(sett);
+      }
+      var result = _.clone(sett);
+      var weftIsSameAsWarp = sett.weft === sett.warp;
+      var warp = _.isArray(sett.warp) ?
+        processTokens(sett.warp, result) : false;
+      var weft = false;
+      if (!weftIsSameAsWarp) {
+        weft = _.isArray(sett.weft) ?
+          processTokens(sett.weft, result) : false;
+      }
+      var warpChanged = isValueChanged(sett.warp, warp);
+      var weftChanged = isValueChanged(sett.weft, weft);
+      if (warpChanged || weftChanged) {
+        if (warpChanged) {
+          result.warp = warp;
+          if (weftIsSameAsWarp) {
+            result.weft = result.warp;
+          }
+        }
+        if (weftChanged) {
+          result.weft = weft;
+        }
+        if (_.isFunction(postprocess)) {
+          result = postprocess(result);
+        }
+        return result;
+      }
+    }
+    return false;
   };
 }
 
-function isPivot(token) {
-  return _.isObject(token) && (token.token == 'pivot');
-}
-
-function pivotToStripe(token) {
-  token = _.clone(token);
-  token.token = 'stripe';
-  return token;
-}
-
-module.exports.isOpenSquareBrace = isOpenSquareBrace;
-module.exports.isCloseSquareBrace = isCloseSquareBrace;
-module.exports.squareBrace = squareBrace;
-module.exports.isPivot = isPivot;
-module.exports.pivotToStripe = pivotToStripe;
+module.exports.isValueChanged = isValueChanged;
+module.exports.makeProcessorResult = makeProcessorResult;
+module.exports.createSimpleProcessor = createSimpleProcessor;

@@ -22,6 +22,10 @@ function sourceFragmentData(source, offset, length) {
   };
 }
 
+function CreateTokenError(message) {
+  return new Error(message);
+}
+
 function InvalidToken(source, offset, length) {
   var error = new Error('Invalid token ' +
     substrNearOffset(source, offset));
@@ -84,6 +88,7 @@ function InvalidColorFormat(token, colorMap) {
   return error;
 }
 
+module.exports.CreateTokenError = CreateTokenError;
 module.exports.InvalidToken = InvalidToken;
 module.exports.ZeroWidthStripe = ZeroWidthStripe;
 module.exports.OrphanedPivot = OrphanedPivot;

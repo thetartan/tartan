@@ -1,9 +1,9 @@
 {
   "name": "tartan",
-  "version": "1.0.2",
-  "description": "Library to render tartan pattern using its textual descriptor",
-  "keywords": ["tartan", "scotland"],
-  "main": "index.html",
+  "version": "2.0.0",
+  "description": "Library to render tartan pattern using its textual descriptor (threadcount).",
+  "keywords": ["tartan", "scotland", "threadcount"],
+  "main": "src/index.js",
   "engines": {
     "node": "^4.0.0",
     "npm": "^2.0.0"

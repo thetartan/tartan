@@ -1,22 +1,25 @@
 'use strict';
 
 var _ = require('lodash');
+var utils = require('../utils');
 var errors = require('../errors');
 
 var defaultOptions = {
-  failOnInvalidTokens: true
+  allowInvalidTokens: false
 };
 
-module.exports = function(options) {
+function factory(options) {
   options = _.extend({}, defaultOptions, options);
   return function(str, offset) {
-    if (options.failOnInvalidTokens) {
+    if (!options.allowInvalidTokens) {
       throw new errors.InvalidToken(str, offset);
     }
     return {
-      token: 'invalid',
+      type: utils.TokenType.invalid,
       value: str.charAt(offset),
       length: 1
     };
   };
-};
+}
+
+module.exports = factory;

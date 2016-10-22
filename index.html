@@ -58,7 +58,7 @@
 </head>
 <body>
   <div class="editor-container">
-    <div><textarea>r#f00 R/40 Y1 R/40 [K8 Y4] Y5 R15 R5 T4 T6 [K8 W4] W/15 K4 Y/1</textarea></div>
+    <div><textarea>r#f00; R/40 Y1 R/40 [K8 Y4] Y5 R15 R5 T4 T6 [K8 W4] W/15 K4 Y/1</textarea></div>
     <div><div class="editor-buttons"><button type="button">Rebuild</button></div></div>
   </div>
   <div class="canvas-container">
@@ -77,52 +77,61 @@
 
     var canvas = document.querySelector('.canvas-container canvas');
 
-    var offset = {x: 0, y: 0};
-    var sett = {
-      weave: [2, 2],
-      warp: [],
-      weft: []
-    };
+    function createParser() {
+      return tartan.parse([
+        tartan.parse.stripe(),
+        tartan.parse.color(),
+        tartan.parse.squareBrackets(),
+        tartan.parse.pivot()
+      ], {
+        failOnInvalidTokens: false
+      }, tartan.process([
+        tartan.process.optimize(),
+        tartan.process.extractColors()
+      ]));
+    }
 
-    var render = tartan.render.canvas(sett);
-    var parse = tartan.parse([
-      tartan.parse.stripe(),
-      tartan.parse.color(),
-      tartan.parse.squareBraces(),
-      tartan.parse.pivot()
-    ], [
-      tartan.process.optimize()
-    ], {
-      failOnInvalidTokens: false
-    });
+    function createCanvasRenderer(sett) {
+      return tartan.render.canvas(sett, {
+        skipUnsupportedTokens: true,
+        skipInvalidColors: true
+      }, tartan.process([
+        tartan.process.unfold({
+          ignoreOrphanedPivots: true
+        })
+      ]));
+    }
 
-    var repaint = tartan.utils.repaint(function() {
-      offset = render.offset(offset).offset();
+    function formatSett(sett) {
+      var renderer = tartan.render.format(sett, {
+        outputOnlyUsedColors: true
+      });
+      return renderer();
+    }
+
+    function getInitialOffset() {
+      return {x: 0, y: 0};
+    }
+
+    var parse = createParser();
+    var render = createCanvasRenderer(null);
+    var offset = getInitialOffset();
+
+    var repaint = tartan.helpers.repaint(function() {
       enableTimers && console.time('render');
-      render(canvas);
+      offset = render(canvas, offset);
       enableTimers && console.timeEnd('render');
     });
 
     // Editor
     (function(editor, button, formatted, repaint) {
-      var renderPattern = tartan.render.pattern([
-        tartan.process.unfold({
-          skipOrphanedPivots: true
-        })
-      ], {
-        skipUnsupportedTokens: true,
-        skipInvalidColors: true
-      });
-
-      var formatPattern = tartan.render.format({
-        outputOnlyUsedColors: true
-      });
-
       function rebuild() {
         enableTimers && console.time('parse');
         try {
           var sett = parse(editor.value);
-          var pattern = renderPattern(sett);
+          render = createCanvasRenderer(sett);
+          formatted.innserHTML = formatSett(sett);
+          offset = getInitialOffset();
         } catch(e) {
           console.log(e);
           if (e.data) {
@@ -131,14 +140,7 @@
           return;
         }
         enableTimers && console.timeEnd('parse');
-
-        sett.warp = pattern;
-        sett.weft = pattern;
-        render = tartan.render.canvas(sett);
-        offset = render.offset();
         repaint();
-
-        formatted.innerHTML = formatPattern(sett);
       }
 
       // Bind event listeners

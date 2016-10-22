@@ -1,36 +1,28 @@
 'use strict';
 
-var pattern1 = /^([a-z])#([0-9a-f]{6})/i;
-var pattern2 = /^([a-z])#([0-9a-f]{3})/i;
+var utils = require('../utils');
+
+var pattern = /^([a-z]{1,100})=?(#[0-9a-f]{3}([0-9a-f]{3})?);/i;
 
 function parser(str, offset) {
   var matches;
 
-  // Color definition can have at most 8 characters
-  str = str.substr(offset, 8);
+  // Color definition can have at most 107 characters
+  str = str.substr(offset, 110);
 
-  matches = pattern1.exec(str);
+  matches = pattern.exec(str);
   if (matches) {
     return {
-      token: 'color',
+      type: utils.TokenType.color,
       name: matches[1].toUpperCase(),
-      color: '#' + matches[2].toLowerCase(),
-      length: matches[0].length
-    };
-  }
-
-  matches = pattern2.exec(str);
-  if (matches) {
-    return {
-      token: 'color',
-      name: matches[1].toUpperCase(),
-      // Duplicate each char
-      color: '#' + matches[2].toLowerCase().replace(/./g, '$&$&'),
+      color: utils.normalizeColor(matches[2]),
       length: matches[0].length
     };
   }
 }
 
-module.exports = function() {
+function factory() {
   return parser;
-};
+}
+
+module.exports = factory;
