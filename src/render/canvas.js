@@ -152,7 +152,7 @@ function factory(sett, options, process) {
   if (!_.isObject(sett)) {
     return renderEmpty;
   }
-  sett = rendering.pattern(sett, options, process)();
+  sett = rendering.pattern(options, process)(sett);
 
   var weave = prepareWeave(sett.weave, defaults.weave.serge);
   var warp = preparePattern(chooseFirstArray(sett.warp, sett.weft), weave);

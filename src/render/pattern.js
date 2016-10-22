@@ -66,36 +66,28 @@ function render(tokens, colors, options) {
     .value();
 }
 
-function renderEmpty() {
-  return {};
-}
-
-function factory(sett, options, process) {
-  if (!_.isObject(sett)) {
-    return renderEmpty;
-  }
-  if (_.isFunction(process)) {
-    sett = process(sett);
-  }
-
+function factory(options, process) {
   options = _.extend({}, defaultOptions, options);
-  var colors = _.extend({}, options.defaultColors, sett.colors);
 
-  var result = null;
-  return function() {
-    // We can cache result as we assume that sett will not change
-    // (since sett is argument for factory, not renderer)
-    if (result === null) {
-      result = _.clone(sett);
-      if (sett.warp) {
-        result.warp = render(sett.warp, colors, options);
-      }
-      if (sett.weft) {
-        if (sett.weft !== sett.warp) {
-          result.weft = render(sett.weft, colors, options);
-        } else {
-          result.weft = result.warp;
-        }
+  return function(sett) {
+    if (!_.isObject(sett)) {
+      return {};
+    }
+    if (_.isFunction(process)) {
+      sett = process(sett);
+    }
+
+    var colors = _.extend({}, options.defaultColors, sett.colors);
+
+    var result = _.clone(sett);
+    if (sett.warp) {
+      result.warp = render(sett.warp, colors, options);
+    }
+    if (sett.weft) {
+      if (sett.weft !== sett.warp) {
+        result.weft = render(sett.weft, colors, options);
+      } else {
+        result.weft = result.warp;
       }
     }
 

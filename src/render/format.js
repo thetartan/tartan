@@ -4,7 +4,7 @@ var _ = require('lodash');
 var utils = require('../utils');
 
 var defaultOptions = {
-  formatter: {
+  formatters: {
     color: function(token) {
       return token.name + token.color + ';';
     },
@@ -18,6 +18,7 @@ var defaultOptions = {
   defaultFormatter: function(token) {
     return token.value;
   },
+  defaultColors: {},
   outputOnlyUsedColors: false
 };
 
@@ -49,7 +50,7 @@ function colorsAsTokens(colors, options) {
 function renderTokens(tokens, options) {
   return trim(_.chain(tokens)
     .map(function(token) {
-      var formatter = options.formatter[token.token];
+      var formatter = options.formatters[token.token];
       if (!_.isFunction(formatter)) {
         formatter = options.defaultFormatter;
       }
@@ -80,27 +81,15 @@ function render(warp, weft, colors, options) {
   return trim(colors + '\n' + warp + '\n' + weft);
 }
 
-function renderEmpty() {
-  return '';
-}
-
-function factory(sett, options, process) {
-  if (!_.isObject(sett)) {
-    return renderEmpty;
-  }
-  if (_.isFunction(process)) {
-    sett = process(sett);
-  }
-  var colors = _.extend({}, sett.colors);
-
+function factory(options, process) {
   options = _.merge({}, defaultOptions, options);
   if (!_.isFunction(options.defaultFormatter)) {
     options.defaultFormatter = defaultOptions.defaultFormatter;
   }
-  if (!_.isObject(options.formatter)) {
-    options.formatter = {};
+  if (!_.isObject(options.formatters)) {
+    options.formatters = {};
   }
-  options.formatter = _.chain(options.formatter)
+  options.formatters = _.chain(options.formatters)
     .map(function(value, key) {
       return _.isFunction(value) ? [key, value] : null;
     })
@@ -108,14 +97,17 @@ function factory(sett, options, process) {
     .fromPairs()
     .value();
 
-  var result = null;
-  return function() {
-    // We can cache result as we assume that sett will not change
-    // (since sett is argument for factory, not renderer)
-    if (result === null) {
-      result = render(sett.warp, sett.weft, colors, options);
+  return function(sett) {
+    if (!_.isObject(sett)) {
+      return '';
     }
-    return result;
+    if (_.isFunction(process)) {
+      sett = process(sett);
+    }
+
+    var colors = _.extend({}, options.defaultColors, sett.colors);
+
+    return render(sett.warp, sett.weft, colors, options);
   };
 }
 

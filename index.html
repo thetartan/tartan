@@ -102,11 +102,10 @@
       ]));
     }
 
-    function formatSett(sett) {
-      var renderer = tartan.render.format(sett, {
+    function createFormatter() {
+      return tartan.render.format({
         outputOnlyUsedColors: true
       });
-      return renderer();
     }
 
     function getInitialOffset() {
@@ -115,6 +114,7 @@
 
     var parse = createParser();
     var render = createCanvasRenderer(null);
+    var format = createFormatter();
     var offset = getInitialOffset();
 
     var repaint = tartan.helpers.repaint(function() {
@@ -130,7 +130,7 @@
         try {
           var sett = parse(editor.value);
           render = createCanvasRenderer(sett);
-          formatted.innserHTML = formatSett(sett);
+          formatted.innserHTML = format(sett);
           offset = getInitialOffset();
         } catch(e) {
           console.log(e);
