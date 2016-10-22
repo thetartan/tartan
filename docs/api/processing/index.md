@@ -38,15 +38,15 @@ which processors are still modifying sett without a need to deeply compare objec
 properties.
 
 There are a lot of pre-built processors:
-* [tartan.process.extractColors()](processors/extract-colors.md) 
-* [tartan.process.matchSquareBrackets()](processors/match-square-brackets.md) 
-* [tartan.process.mergeStripes()](processors/merge-stripes.md) 
-* [tartan.process.optimize()](processors/optimize.md) 
-* [tartan.process.pivotsToSquareBrackets()](processors/pivots-to-square-brackets.md) 
-* [tartan.process.removeEmptySquareBrackets()](processors/remove-empty-square-brackets.md) 
-* [tartan.process.removeTokens()](processors/remove-tokens.md) 
-* [tartan.process.removeZeroWidthStripes()](processors/remove-zero-width-stripes.md) 
-* [tartan.process.unfold()](processors/unfold.md) 
+* [tartan.process.extractColors()](extract-colors.md) 
+* [tartan.process.matchSquareBrackets()](match-square-brackets.md) 
+* [tartan.process.mergeStripes()](merge-stripes.md) 
+* [tartan.process.optimize()](optimize.md) 
+* [tartan.process.pivotsToSquareBrackets()](pivots-to-square-brackets.md) 
+* [tartan.process.removeEmptySquareBrackets()](remove-empty-square-brackets.md) 
+* [tartan.process.removeTokens()](remove-tokens.md) 
+* [tartan.process.removeZeroWidthStripes()](remove-zero-width-stripes.md) 
+* [tartan.process.unfold()](unfold.md) 
 
 To create new parsers, use information above and source codes of built-in parsers
 as examples.

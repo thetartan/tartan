@@ -22,10 +22,10 @@ var colorParser = tartan.parse.color();
 ```
 
 Library has some built-in parsers:
-* [tartan.parse.color()](parsers/color.md) 
-* [tartan.parse.stripe()](parsers/stripe.md) 
-* [tartan.parse.pivot()](parsers/pivot.md) 
-* [tartan.parse.squareBrackets()](parsers/square-brackets.md)
+* [tartan.parse.color()](color.md) 
+* [tartan.parse.stripe()](stripe.md) 
+* [tartan.parse.pivot()](pivot.md) 
+* [tartan.parse.squareBrackets()](square-brackets.md)
  
 Also there are two internally used parsers: `whitespace` and `invalid`.
 `whitespace` parser is always prepended to array of parsers and is used to
@@ -37,7 +37,7 @@ options for this two internal parsers.
 
 The last optional argument is a function that takes a sett and should also 
 return a sett. This function is a hook where sett can be modified after parsing.
-Library has a lot of predefined [processors](processing.md) that can do a lot of
+Library has a lot of predefined [processors](../processing/index.md) that can do a lot of
 useful stuff.
  
 To parse a threadcount source, parser will ask each parser to recognize a text at
