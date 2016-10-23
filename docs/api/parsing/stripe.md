@@ -9,7 +9,7 @@ Allows to parse stripe definitions. Syntax:
 <stripe> ::= <name> <number> 
 ```
 
-Usage: 
+**Usage:** 
 ```javascript
 var parser = tartan.parse.stripe({
   allowZeroWidthStripes: false
@@ -19,7 +19,7 @@ var parser = tartan.parse.stripe({
 Name is converted to upper-case and number is converted
 to `integer` value.
 
-Returned token for string `"r20`:
+Returned token for string `'r20'`:
 ```json
 {
   "type": "stripe",
@@ -28,6 +28,8 @@ Returned token for string `"r20`:
 }
 ```
 
-Options (with default values):
+**Options (with default values):**
 * `allowZeroWidthStripes: false` - if set to `true` - parser will return
 tokens with `count = 0`; otherwise it will throw an exception.
+* `allowLongNames: true` - if set to true - stripe name can contain more than
+one character.

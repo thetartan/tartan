@@ -7,5 +7,6 @@
 * [Parsing](parsing/index.md)
 * [Processing](processing/index.md)
 * [Rendering](rendering/index.md)
+* [Standard syntax support](syntax/index.md)
 * [Useful utilities and helpers](utilities.md)
 * [Examples](examples/index.md)

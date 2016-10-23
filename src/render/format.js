@@ -22,10 +22,6 @@ var defaultOptions = {
   outputOnlyUsedColors: false
 };
 
-function trim(str) {
-  return str.replace(/^\s+/i, '').replace(/\s+$/i, '');
-}
-
 function getOnlyUsedColors(tokens, colors) {
   var result = {};
   _.each(tokens, function(token) {
@@ -48,9 +44,9 @@ function colorsAsTokens(colors, options) {
 }
 
 function renderTokens(tokens, options) {
-  return trim(_.chain(tokens)
+  return utils.trim(_.chain(tokens)
     .map(function(token) {
-      var formatter = options.formatters[token.token];
+      var formatter = options.formatters[token.type];
       if (!_.isFunction(formatter)) {
         formatter = options.defaultFormatter;
       }
@@ -58,6 +54,7 @@ function renderTokens(tokens, options) {
     })
     .filter()
     .join(' ')
+    .replace(/\[\s/ig, '[')
     .replace(/\s\]/ig, ']')
     .value());
 }
@@ -78,7 +75,7 @@ function render(warp, weft, colors, options) {
     weft = '';
   }
 
-  return trim(colors + '\n' + warp + '\n' + weft);
+  return utils.trim(colors + '\n' + warp + '\n' + weft);
 }
 
 function factory(options, process) {

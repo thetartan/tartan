@@ -26,6 +26,7 @@ Library has some built-in parsers:
 * [tartan.parse.stripe()](stripe.md) 
 * [tartan.parse.pivot()](pivot.md) 
 * [tartan.parse.squareBrackets()](square-brackets.md)
+* [tartan.parse.parenthesis()](parenthesis.md)
  
 Also there are two internally used parsers: `whitespace` and `invalid`.
 `whitespace` parser is always prepended to array of parsers and is used to

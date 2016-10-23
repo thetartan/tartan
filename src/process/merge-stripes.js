@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
+var utils = require('../utils');
 var processingUtils = require('./utils');
 
 function processTokens(tokens) {
@@ -12,7 +13,7 @@ function processTokens(tokens) {
 
   for (i = 0; i < tokens.length; i++) {
     current = tokens[i];
-    if (current.token == 'stripe') {
+    if (utils.isStripe(current)) {
       if (merged) {
         if (merged.name == current.name) {
           merged.count += current.count;

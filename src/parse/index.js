@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var utils = require('../utils');
 var defaults = require('../defaults');
+var stringSource = require('../source/string');
 var whitespace = require('./whitespace');
 var invalid = require('./invalid');
 
@@ -39,24 +40,41 @@ function executeParsers(str, parsers, offset, result) {
   return offset;
 }
 
+function parse(str, parsers) {
+  var tokens = [];
+  var offset = 0;
+
+  while (offset < str.length) {
+    offset = executeParsers(str, parsers, offset, tokens);
+  }
+
+  return tokens;
+}
+
 function factory(parsers, options, process) {
   parsers = _.filter(parsers, _.isFunction);
   parsers.splice(0, 0, whitespace()); // Prepend this parser to skip spaces
   parsers.push(invalid(options)); // This parser will handle invalid tokens
 
-  return function(str) {
-    var tokens = [];
-    var offset = 0;
-    var result = {
-      weave: defaults.weave.serge,
-      colors: []
-    };
-
-    while (offset < str.length) {
-      offset = executeParsers(str, parsers, offset, tokens);
+  return function(source) {
+    if (!_.isFunction(source)) {
+      source = stringSource(source);
+    }
+    source = source();
+    if (!_.isObject(source)) {
+      return {
+        colors: {},
+        warp: []
+      };
     }
 
-    result.warp = tokens;
+    var result = {};
+
+    _.each(source, function(value, key) {
+      result[key] = parse(value, parsers);
+    });
+    result.colors = _.isObject(result.colors) ? result.colors : {};
+    result.warp = _.isArray(result.warp) ? result.warp : [];
 
     if (_.isFunction(process)) {
       result = process(result);
@@ -72,3 +90,4 @@ module.exports.color = require('./color');
 module.exports.stripe = require('./stripe');
 module.exports.pivot = require('./pivot');
 module.exports.squareBrackets = require('./square-brackets');
+module.exports.parenthesis = require('./parenthesis');

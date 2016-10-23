@@ -8,15 +8,38 @@ var defaultOptions = {
   keepColorTokens: false
 };
 
+function tryAddColor(token, colors) {
+  var result = null;
+  if (utils.isColor(token)) {
+    result = false;
+    if (token.color != colors[token.name]) {
+      result = true;
+      colors[token.name] = token.color;
+    }
+  }
+  return result;
+}
+
 function process(tokens, sett, options) {
   var isModified = false;
   var colors = _.extend({}, sett.colors);
-  var result = _.filter(tokens, function(token) {
-    if (utils.isColor(token)) {
-      if (token.color != colors[tokens.name]) {
+
+  // Special handling: `palette` may contain a list of colors
+  if (_.isArray(sett.palette)) {
+    _.each(sett.palette, function(token) {
+      var result = tryAddColor(token, colors);
+      if (result !== null) {
         isModified = true;
-        colors[token.name] = token.color;
       }
+    });
+    // Clear the palette as it will not be needed in future (for this sett)
+    sett.palette = undefined;
+  }
+
+  var result = _.filter(tokens, function(token) {
+    var result = tryAddColor(token, colors);
+    if (result !== null) { // It was a color!
+      isModified = result === true; // Modified only if color was added to map
       return options.keepColorTokens;
     }
     return true;

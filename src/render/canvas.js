@@ -165,14 +165,18 @@ function factory(sett, options, process) {
   return function(canvas, offset) {
     offset = prepareOffset(offset, warp, weft);
 
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+
     var options = {
       warp: warp,
       weft: weft,
       weave: weave,
-      width: parseInt(canvas.width, 10),
-      height: parseInt(canvas.height, 10),
+      width: Math.ceil(parseFloat(canvas.width) || 0),
+      height: Math.ceil(parseFloat(canvas.height) || 0),
       offset: offset
     };
+
     if ((options.width > 0) && (options.height > 0)) {
       var context = canvas.getContext('2d');
       renderWarp(context, options);

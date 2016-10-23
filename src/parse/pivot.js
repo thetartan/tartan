@@ -4,13 +4,29 @@ var _ = require('lodash');
 var utils = require('../utils');
 var errors = require('../errors');
 
-var pattern = /^([a-z])\/([0-9]+)/i;
-
 var defaultOptions = {
-  allowZeroWidthStripes: false
+  allowZeroWidthStripes: false,
+  // Name can have more than one character
+  allowLongNames: true
 };
 
-function parser(str, offset, options) {
+function buildRegExp(options) {
+  var result = ['^'];
+
+  // Name part
+  var part = '[a-z]';
+  if (options.allowLongNames) {
+    part += '{1,100}';
+  }
+  result.push('(' + part + ')');
+
+  // Count part
+  result.push('\/([0-9]+)');
+
+  return new RegExp(result.join(''), 'i');
+}
+
+function parser(str, offset, pattern, options) {
   // Hope nobody will try to add stripe with 1e9 lines...
   var matches = pattern.exec(str.substr(offset, 10));
   if (matches) {
@@ -32,8 +48,9 @@ function parser(str, offset, options) {
 
 function factory(options) {
   options = _.extend({}, defaultOptions, options);
+  var pattern = buildRegExp(options);
   return function(str, offset) {
-    return parser(str, offset, options);
+    return parser(str, offset, pattern, options);
   };
 }
 

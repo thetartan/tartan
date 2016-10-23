@@ -9,8 +9,13 @@ var TokenType = {
   color: 'color',
   stripe: 'stripe',
   pivot: 'pivot',
+  parenthesis: 'parenthesis',
   squareBracket: 'square-bracket'
 };
+
+function trim(str) {
+  return str.replace(/^\s+/i, '').replace(/\s+$/i, '');
+}
 
 function isValidName(str) {
   return /^[a-z]+$/i.test(str);
@@ -83,6 +88,18 @@ function isOpeningSquareBracket(token) {
 
 function isClosingSquareBracket(token) {
   return isSquareBracket(token) && (token.value == ']');
+}
+
+function isParenthesis(token) {
+  return isToken(token, TokenType.parenthesis);
+}
+
+function isOpeningParenthesis(token) {
+  return isParenthesis(token) && (token.value == '(');
+}
+
+function isClosingParenthesis(token) {
+  return isParenthesis(token) && (token.value == ')');
 }
 
 function pivotToStripe(token) {
@@ -177,7 +194,25 @@ function newTokenClosingSquareBracket() {
   return newToken(TokenType.squareBracket, ']');
 }
 
+function newTokenParenthesis(value) {
+  if ((value != '(') && (value != ')')) {
+    throw new errors.CreateTokenError('Invalid value ' + JSON.stringify(value) +
+      ' for token ' + TokenType.parenthesis);
+  }
+  return newToken(TokenType.parenthesis, value);
+}
+
+function newTokenOpeningParenthesis() {
+  return newToken(TokenType.parenthesis, '(');
+}
+
+function newTokenClosingParenthesis() {
+  return newToken(TokenType.parenthesis, ')');
+}
+
 module.exports.TokenType = TokenType;
+
+module.exports.trim = trim;
 
 module.exports.isValidName = isValidName;
 module.exports.isValidColor = isValidColor;
@@ -193,6 +228,9 @@ module.exports.isPivot = isPivot;
 module.exports.isSquareBracket = isSquareBracket;
 module.exports.isOpeningSquareBracket = isOpeningSquareBracket;
 module.exports.isClosingSquareBracket = isClosingSquareBracket;
+module.exports.isParenthesis = isParenthesis;
+module.exports.isOpeningParenthesis = isOpeningParenthesis;
+module.exports.isClosingParenthesis = isClosingParenthesis;
 
 module.exports.pivotToStripe = pivotToStripe;
 
@@ -205,3 +243,6 @@ module.exports.newTokenPivot = newTokenPivot;
 module.exports.newTokenSquareBracket = newTokenSquareBracket;
 module.exports.newTokenOpeningSquareBracket = newTokenOpeningSquareBracket;
 module.exports.newTokenClosingSquareBracket = newTokenClosingSquareBracket;
+module.exports.newTokenParenthesis = newTokenParenthesis;
+module.exports.newTokenOpeningParenthesis = newTokenOpeningParenthesis;
+module.exports.newTokenClosingParenthesis = newTokenClosingParenthesis;
