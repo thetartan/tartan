@@ -20,9 +20,7 @@ var invalidSyntax = [
   '',
   '   ',
   'R#f00', // No ';'
-  'R=f00;', // No '#'
   '#f00',
-  'R=f00;',
   'R=#ff00;' // Invalid color
 ];
 
@@ -46,7 +44,9 @@ describe('Color parser', function() {
   });
 
   it('Should not parse', function(done) {
-    var parse = tartan.parse.color();
+    var parse = tartan.parse.color({
+      semicolonAtTheEnd: 'require'
+    });
     _.each(invalidSyntax, function(sample) {
       var token = parse(sample);
       assert.isNotObject(token);

@@ -7,6 +7,7 @@ var process = require('../../process');
 var utils = require('../../utils');
 
 function factory(options, processors) {
+  // TODO: Allow to use more options from `options`
   return parse([
     parse.color({
       allowLongNames: true,

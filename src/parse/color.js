@@ -79,7 +79,7 @@ function buildRegExp(options) {
   }
 
   if (options.allowShortFormat) {
-    result.push('([0-9a-f]{6}|[0-9a-f]{3})'); // TODO: remove second parenthesis
+    result.push('([0-9a-f]{6}|[0-9a-f]{3})');
   } else {
     result.push('([0-9a-f]{6})');
   }
