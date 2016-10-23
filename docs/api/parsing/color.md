@@ -5,9 +5,11 @@ Allows to parse color definitions. Syntax:
 <letter> ::= 'a'..'z', 'A'..'Z'
 <hex> ::= '0'..'9', 'a'..'f', 'A'..'F'
 <name> ::= { <letter }
-<short color> ::= '#' 3 * { <hex> }
-<long color> ::= '#' 6 * { <hex> }
-<color> ::= <name> '=' (<short color> | <long color>) ';' 
+<short color> ::= 3 * { <hex> }
+<long color> ::= 6 * { <hex> }
+<comment> ::= { <any symbol> }
+<color> ::= <name> ['='] ['#'] (<short color> | <long color>) 
+  [ [';'] <comment> ] [';']  
 ```
 
 **Usage:** 
