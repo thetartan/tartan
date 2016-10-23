@@ -71,11 +71,10 @@ module.exports = factory;
 module.exports.extractColors = require('./extract-colors');
 module.exports.matchSquareBrackets = require('./match-square-brackets');
 module.exports.mergeStripes = require('./merge-stripes');
+module.exports.optimize = require('./optimize');
 module.exports.pivotsToSquareBrackets = require('./pivots-to-square-brackets');
 module.exports.removeEmptySquareBrackets =
   require('./remove-empty-square-brackets');
 module.exports.removeTokens = require('./remove-tokens');
 module.exports.removeZeroWidthStripes = require('./remove-zero-width-stripes');
-
 module.exports.unfold = require('./unfold');
-module.exports.optimize = require('./optimize');

@@ -21,16 +21,16 @@ function processTokens(tokens, predicate) {
   if (!_.isArray(tokens)) {
     return false;
   }
-  var wasModified = false;
+  var isModified = false;
   var result = _.filter(tokens, function(token) {
     if (predicate(token)) {
-      wasModified = true;
+      isModified = true;
       return false;
     }
     return true;
   });
 
-  return processingUtils.makeProcessorResult(result, wasModified);
+  return processingUtils.makeProcessorResult(result, isModified);
 }
 
 function factory(typesOrPredicate) {

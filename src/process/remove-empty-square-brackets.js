@@ -5,7 +5,7 @@ var utils = require('../utils');
 
 function processTokens(tokens) {
   var result = [];
-  var wasModified = false;
+  var isModified = false;
   var i;
   var current;
   var next;
@@ -16,14 +16,14 @@ function processTokens(tokens) {
       next = tokens[i + 1];
       if (utils.isClosingSquareBracket(next)) {
         i += 2;
-        wasModified = true;
+        isModified = true;
         continue;
       }
     }
     result.push(current);
   }
 
-  return processingUtils.makeProcessorResult(result, wasModified);
+  return processingUtils.makeProcessorResult(result, isModified);
 }
 
 function factory() {

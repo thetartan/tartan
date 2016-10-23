@@ -35,18 +35,18 @@ function unfold(tokens) {
 }
 
 function processTokens(tokens) {
-  var wasModified = false;
+  var isModified = false;
   while (true) {
     var temp = unfold(tokens);
     if (_.isArray(temp)) {
       tokens = temp;
-      wasModified = true;
+      isModified = true;
     } else {
       break;
     }
   }
 
-  return processingUtils.makeProcessorResult(tokens, wasModified);
+  return processingUtils.makeProcessorResult(tokens, isModified);
 }
 
 function factory(options) {

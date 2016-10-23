@@ -5,7 +5,7 @@ var processingUtils = require('./utils');
 
 function processTokens(tokens) {
   var result = [];
-  var wasModified = false;
+  var isModified = false;
   var i;
   var current;
   var merged;
@@ -16,7 +16,7 @@ function processTokens(tokens) {
       if (merged) {
         if (merged.name == current.name) {
           merged.count += current.count;
-          wasModified = true;
+          isModified = true;
         } else {
           result.push(merged);
           merged = _.clone(current);
@@ -37,7 +37,7 @@ function processTokens(tokens) {
     result.push(merged);
   }
 
-  return processingUtils.makeProcessorResult(result, wasModified);
+  return processingUtils.makeProcessorResult(result, isModified);
 }
 
 function factory() {

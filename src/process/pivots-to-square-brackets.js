@@ -10,7 +10,7 @@ var defaultOptions = {
 };
 
 function processTokens(tokens, options) {
-  var wasModified = false;
+  var isModified = false;
   var result = [];
   var i;
   var token;
@@ -20,7 +20,7 @@ function processTokens(tokens, options) {
   for (i = 0; i < tokens.length; i++) {
     token = tokens[i];
     if (utils.isPivot(token)) {
-      wasModified = true;
+      isModified = true;
 
       if (!open) {
         open = [utils.pivotToStripe(token)];
@@ -70,7 +70,7 @@ function processTokens(tokens, options) {
     }
   }
 
-  return processingUtils.makeProcessorResult(result, wasModified);
+  return processingUtils.makeProcessorResult(result, isModified);
 }
 
 function factory(options) {

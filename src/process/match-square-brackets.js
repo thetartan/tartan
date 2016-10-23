@@ -4,7 +4,7 @@ var processingUtils = require('./utils');
 var utils = require('../utils');
 
 function processTokens(tokens) {
-  var wasModified = false;
+  var isModified = false;
   var result = [];
   var balance = 0;
   var i;
@@ -21,7 +21,7 @@ function processTokens(tokens) {
   }
 
   if (balance != 0) {
-    wasModified = true;
+    isModified = true;
 
     while (balance < 0) {
       result.push(utils.newTokenOpeningSquareBracket());
@@ -34,7 +34,7 @@ function processTokens(tokens) {
     }
   }
 
-  return processingUtils.makeProcessorResult(result, wasModified);
+  return processingUtils.makeProcessorResult(result, isModified);
 }
 
 function factory() {

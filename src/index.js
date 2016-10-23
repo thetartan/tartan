@@ -1,5 +1,9 @@
 'use strict';
 
+var _ = require('lodash');
+
+_.extend(module.exports, require('./package'));
+
 module.exports.errors = require('./errors');
 module.exports.parse = require('./parse');
 module.exports.process = require('./process');

@@ -9,12 +9,12 @@ var defaultOptions = {
 };
 
 function process(tokens, sett, options) {
-  var wasModified = false;
+  var isModified = false;
   var colors = _.extend({}, sett.colors);
   var result = _.filter(tokens, function(token) {
     if (utils.isColor(token)) {
       if (token.color != colors[tokens.name]) {
-        wasModified = true;
+        isModified = true;
         colors[token.name] = token.color;
       }
       return options.keepColorTokens;
@@ -22,11 +22,11 @@ function process(tokens, sett, options) {
     return true;
   });
 
-  if (wasModified) {
+  if (isModified) {
     sett.colors = utils.normalizeColorMap(colors);
   }
 
-  return processingUtils.makeProcessorResult(result, wasModified);
+  return processingUtils.makeProcessorResult(result, isModified);
 }
 
 function factory(options) {
