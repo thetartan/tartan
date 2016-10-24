@@ -26,4 +26,10 @@ only one time and `offset` argument will be ignored.
 
 Render function return actual offset that was using for rendering. Tartan
 pattern has a period when it repeats, and offset and be simplified by extracting
-that period as much times as possible.   
+that period as much times as possible. 
+  
+Also you can access sett metrics after creating canvas renderer using `metrics`
+property:
+```javascript
+console.log(render.metrics);   
+```   

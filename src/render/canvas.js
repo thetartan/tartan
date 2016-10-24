@@ -161,6 +161,20 @@ function chooseFirstArray() {
   return _.find(arguments, _.isArray) || [];
 }
 
+function getMetrics(weave, preparedWarp, preparedWeft) {
+  return {
+    weave: weave,
+    warp: {
+      length: preparedWarp.lengthOfPattern,
+      fullCycle: preparedWarp.lengthOfCycle
+    },
+    weft: {
+      length: preparedWeft.lengthOfPattern,
+      fullCycle: preparedWeft.lengthOfCycle
+    }
+  };
+}
+
 function renderEmpty() {
   return {x: 0, y: 0};
 }
@@ -179,7 +193,7 @@ function factory(sett, options, process) {
     return renderEmpty;
   }
 
-  return function(canvas, offset, repeat) {
+  var result = function(canvas, offset, repeat) {
     repeat = (arguments.length == 2) || !!repeat;
 
     offset = repeat ? prepareOffset(offset, warp, weft) : {x: 0, y: 0};
@@ -203,6 +217,10 @@ function factory(sett, options, process) {
 
     return offset;
   };
+
+  result.metrics = getMetrics(weave, warp, weft);
+
+  return result;
 }
 
 module.exports = factory;

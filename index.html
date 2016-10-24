@@ -139,8 +139,9 @@
         try {
           var sett = parse(editor.value);
           render = createCanvasRenderer(sett);
+          console.log('Metrics #1:', render.metrics);
           formatted.innerHTML = format(sett);
-          console.log('Metrics:', metrics(sett));
+          console.log('Metrics #2:', metrics(sett));
           offset = getInitialOffset();
         } catch(e) {
           console.log(e);
