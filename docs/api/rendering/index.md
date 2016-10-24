@@ -7,3 +7,4 @@ built-in renderers:
 * [tartan.render.canvas()](canvas.md)
 * [tartan.render.format()](format.md)
 * [tartan.render.pattern()](pattern.md)
+* [tartan.render.metrics()](metrics.md)

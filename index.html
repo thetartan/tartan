@@ -5,16 +5,22 @@
   <title>Tartan Demo</title>
 
   <style>
-    .editor-container,
-    .canvas-container,
-    .formatted-sett-container
-    {
+    .container {
       position: relative;
+      margin: 0;
+      padding: 0;
+      border: 1px solid silver;
+      text-align: left;
+    }
+
+    #editor-container,
+    #canvas-container,
+    #formatted-container {
       margin: 30px 50px;
     }
 
-    .editor-container textarea {
-      border: 1px solid silver;
+    #editor-container textarea {
+      border: 0;
       display: block;
       width: 100%;
       height: 100px;
@@ -24,45 +30,39 @@
       overflow-y: scroll;
     }
 
-    .editor-container .editor-buttons {
-      display: block;
-      text-align: left;
-      vertical-align: top;
-      margin-top: 10px;
-    }
-
-    .canvas-container canvas {
+    #canvas-container canvas {
       width: 100%;
       height: 450px;
-      border: 1px solid silver;
-      vertical-align: top;
+      border: 0;
+      margin: 0;
+      padding: 0;
       cursor: move;
       image-rendering: pixelated;
       -ms-interpolation-mode: nearest-neighbor;
     }
 
-    .formatted-sett-container pre {
+    #formatted-container pre {
       display: block;
       width: 100%;
       min-height: 1.5em;
-      border: 1px solid silver;
       vertical-align: top;
       text-align: left;
+      margin: 0;
       padding: 3px 2px;
-      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <div class="editor-container">
-    <div><textarea>r#f00; R/40 Y1 R/40 [K8 Y4] Y5 R15 R5 T4 T6 [K8 W4] W/15 K4 Y/1</textarea></div>
-    <div><div class="editor-buttons"><button type="button">Rebuild</button></div></div>
+  <div id="editor-container">
+    <div class="container"><textarea>r#f00; R/40 Y1 R/40 [K8 Y4] Y5 R15 R5 T4 T6 [K8 W4] W/15 K4 Y/1</textarea></div>
+    <div style="margin-top: 10px;"><button type="button">Rebuild</button></div>
   </div>
-  <div class="canvas-container">
+
+  <div id="canvas-container" class="container">
     <canvas></canvas>
   </div>
 
-  <div class="formatted-sett-container">
+  <div id="formatted-container" class="container">
     <pre></pre>
   </div>
 
@@ -72,7 +72,7 @@
   (function() {
     var enableTimers = false;
 
-    var canvas = document.querySelector('.canvas-container canvas');
+    var canvas = document.querySelector('#canvas-container canvas');
 
     function createParser() {
       return tartan.parse([
@@ -99,6 +99,17 @@
       ]));
     }
 
+    function createMetricsCalculator() {
+      return tartan.render.metrics({
+        skipUnsupportedTokens: true,
+        skipInvalidColors: true
+      }, tartan.process([
+        tartan.process.unfold({
+          ignoreOrphanedPivots: true
+        })
+      ]));
+    }
+
     function createFormatter() {
       return tartan.render.format({
         outputOnlyUsedColors: true
@@ -112,6 +123,7 @@
     var parse = createParser();
     var render = createCanvasRenderer(null);
     var format = createFormatter();
+    var metrics = createMetricsCalculator();
     var offset = getInitialOffset();
 
     var repaint = tartan.helpers.repaint(function() {
@@ -128,6 +140,7 @@
           var sett = parse(editor.value);
           render = createCanvasRenderer(sett);
           formatted.innerHTML = format(sett);
+          console.log('Metrics:', metrics(sett));
           offset = getInitialOffset();
         } catch(e) {
           console.log(e);
@@ -144,11 +157,13 @@
       button.addEventListener('click', rebuild);
 
       // Initial paint
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
       rebuild();
     })(
-      document.querySelector('.editor-container textarea'),
-      document.querySelector('.editor-container button'),
-      document.querySelector('.formatted-sett-container pre'),
+      document.querySelector('#editor-container textarea'),
+      document.querySelector('#editor-container button'),
+      document.querySelector('#formatted-container pre'),
       repaint);
 
     // Canvas
@@ -196,6 +211,8 @@
       });
 
       window.addEventListener('resize', function() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
         repaint();
       });
     })(canvas, repaint);

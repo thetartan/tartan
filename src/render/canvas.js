@@ -4,6 +4,15 @@ var _ = require('lodash');
 var defaults = require('../defaults');
 var rendering = require('./index');
 
+function clearCanvas(context, options) {
+  if (!options.repeat) {
+    context.clearRect(0, 0, options.width, options.height);
+    options.width = Math.min(options.width, options.warp.lengthOfPattern);
+    options.height = Math.min(options.height, options.warp.lengthOfPattern);
+  }
+  return options;
+}
+
 function renderWarp(context, options) {
   var pattern = options.warp.pattern;
   var i;
@@ -32,6 +41,10 @@ function renderWarp(context, options) {
       }
     }
     first = 0;
+
+    if (!options.repeat) {
+      break;
+    }
   }
 }
 
@@ -84,6 +97,10 @@ function renderWeft(context, options) {
       }
     }
     first = 0;
+
+    if (!options.repeat) {
+      break;
+    }
   }
 }
 
@@ -162,11 +179,10 @@ function factory(sett, options, process) {
     return renderEmpty;
   }
 
-  return function(canvas, offset) {
-    offset = prepareOffset(offset, warp, weft);
+  return function(canvas, offset, repeat) {
+    repeat = (arguments.length == 2) || !!repeat;
 
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    offset = repeat ? prepareOffset(offset, warp, weft) : {x: 0, y: 0};
 
     var options = {
       warp: warp,
@@ -174,11 +190,13 @@ function factory(sett, options, process) {
       weave: weave,
       width: Math.ceil(parseFloat(canvas.width) || 0),
       height: Math.ceil(parseFloat(canvas.height) || 0),
-      offset: offset
+      offset: offset,
+      repeat: repeat
     };
 
     if ((options.width > 0) && (options.height > 0)) {
       var context = canvas.getContext('2d');
+      options = clearCanvas(context, options);
       renderWarp(context, options);
       renderWeft(context, options);
     }
