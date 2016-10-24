@@ -78,13 +78,13 @@
       return tartan.parse([
         tartan.parse.stripe(),
         tartan.parse.color(),
+        tartan.parse.parenthesis(),
         tartan.parse.squareBrackets(),
         tartan.parse.pivot()
       ], {
         failOnInvalidTokens: false
       }, tartan.process([
         tartan.process.optimize(),
-        tartan.process.extractColors()
       ]));
     }
 

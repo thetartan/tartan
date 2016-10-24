@@ -72,6 +72,8 @@ module.exports.extractColors = require('./extract-colors');
 module.exports.matchSquareBrackets = require('./match-square-brackets');
 module.exports.mergeStripes = require('./merge-stripes');
 module.exports.optimize = require('./optimize');
+module.exports.parenthesisToSquareBrackets =
+  require('./parenthesis-to-square-brackets');
 module.exports.pivotsToSquareBrackets = require('./pivots-to-square-brackets');
 module.exports.removeEmptySquareBrackets =
   require('./remove-empty-square-brackets');

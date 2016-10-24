@@ -42,6 +42,7 @@ There are a lot of pre-built processors:
 * [tartan.process.matchSquareBrackets()](match-square-brackets.md) 
 * [tartan.process.mergeStripes()](merge-stripes.md) 
 * [tartan.process.optimize()](optimize.md) 
+* [tartan.process.parenthesisToSquareBrackets()](parenthesis-to-square-brackets.md) 
 * [tartan.process.pivotsToSquareBrackets()](pivots-to-square-brackets.md) 
 * [tartan.process.removeEmptySquareBrackets()](remove-empty-square-brackets.md) 
 * [tartan.process.removeTokens()](remove-tokens.md) 

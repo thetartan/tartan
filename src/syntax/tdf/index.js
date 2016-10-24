@@ -7,7 +7,6 @@ var process = require('../../process');
 var utils = require('../../utils');
 
 function factory(options, processors) {
-  // TODO: Allow to use more options from `options`
   return parse([
     parse.color({
       allowLongNames: true,
@@ -24,9 +23,8 @@ function factory(options, processors) {
     parse.parenthesis()
   ], options, process([
     // Square brackets are used only to mark a start of threadcount.
-    // It can be safely removed.
+    // They can be safely removed.
     process.removeTokens([utils.TokenType.squareBracket]),
-    process.extractColors(),
     process.optimize()
   ].concat(_.isArray(processors) ? processors : [])));
 }
