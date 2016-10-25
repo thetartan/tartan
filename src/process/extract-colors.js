@@ -39,7 +39,13 @@ function process(tokens, sett, options) {
   var result = _.filter(tokens, function(token) {
     var result = tryAddColor(token, colors);
     if (result !== null) { // It was a color!
-      isModified = result === true; // Modified only if color was added to map
+      if (options.keepColorTokens) {
+        // Modified only if color was added to map
+        isModified = result === true;
+      } else {
+        // Modified anyway since we'll remove tokens
+        isModified = true;
+      }
       return options.keepColorTokens;
     }
     return true;

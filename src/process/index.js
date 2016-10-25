@@ -79,4 +79,5 @@ module.exports.removeEmptySquareBrackets =
   require('./remove-empty-square-brackets');
 module.exports.removeTokens = require('./remove-tokens');
 module.exports.removeZeroWidthStripes = require('./remove-zero-width-stripes');
+module.exports.splitWarpAndWeft = require('./split-warp-and-weft');
 module.exports.unfold = require('./unfold');

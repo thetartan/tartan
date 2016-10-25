@@ -91,3 +91,4 @@ module.exports.stripe = require('./stripe');
 module.exports.pivot = require('./pivot');
 module.exports.squareBrackets = require('./square-brackets');
 module.exports.parenthesis = require('./parenthesis');
+module.exports.literal = require('./literal');

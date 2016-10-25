@@ -2,6 +2,7 @@
 
 // Syntax by Scottish Tartans Authority
 
+var utils = require('../../utils');
 var parse = require('../../parse');
 var process = require('../../process');
 
@@ -21,8 +22,14 @@ function factory(options, processors) {
     }),
     parse.pivot({
       allowLongNames: true
+    }),
+    parse.literal({
+      string: '.' // Delimiter between warp and weft
     })
   ], options, process([
+    process.splitWarpAndWeft(function(token) {
+      return utils.isLiteral(token) && (token.value == '.');
+    }),
     process.optimize({
       forceSquareBrackets: false
     })

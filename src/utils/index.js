@@ -10,7 +10,8 @@ var TokenType = {
   stripe: 'stripe',
   pivot: 'pivot',
   parenthesis: 'parenthesis',
-  squareBracket: 'square-bracket'
+  squareBracket: 'square-bracket',
+  literal: 'literal'
 };
 
 function trim(str) {
@@ -100,6 +101,10 @@ function isOpeningParenthesis(token) {
 
 function isClosingParenthesis(token) {
   return isParenthesis(token) && (token.value == ')');
+}
+
+function isLiteral(token) {
+  return isToken(token, TokenType.literal);
 }
 
 function pivotToStripe(token) {
@@ -210,6 +215,10 @@ function newTokenClosingParenthesis() {
   return newToken(TokenType.parenthesis, ')');
 }
 
+function newTokenLiteral(value) {
+  return newToken(TokenType.literal, value);
+}
+
 module.exports.TokenType = TokenType;
 
 module.exports.trim = trim;
@@ -231,6 +240,7 @@ module.exports.isClosingSquareBracket = isClosingSquareBracket;
 module.exports.isParenthesis = isParenthesis;
 module.exports.isOpeningParenthesis = isOpeningParenthesis;
 module.exports.isClosingParenthesis = isClosingParenthesis;
+module.exports.isLiteral = isLiteral;
 
 module.exports.pivotToStripe = pivotToStripe;
 
@@ -246,3 +256,4 @@ module.exports.newTokenClosingSquareBracket = newTokenClosingSquareBracket;
 module.exports.newTokenParenthesis = newTokenParenthesis;
 module.exports.newTokenOpeningParenthesis = newTokenOpeningParenthesis;
 module.exports.newTokenClosingParenthesis = newTokenClosingParenthesis;
+module.exports.newTokenLiteral = newTokenLiteral;
