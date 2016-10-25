@@ -23,6 +23,19 @@ Entries can be separated by whitespaces, or not separated.
 To indicate that threadcount is reflective, all entries except first and last
 are captured into parenthesis. The first and last entry are pivots.
 
+## Different warp and weft sequences
+ 
+Different warp and weft sequences should be separated by a newline:
+```
+B#2C2C80 
+G#006818 
+R#C80000 
+K#000000 
+W#FFFFFF
+B24 W4 B24 R2 
+K24 G24 W2
+``` 
+
 ## Examples
 
 Repeating sett:

@@ -30,6 +30,14 @@ another should also be a pivot.
 But, in practice, this is not always the case: reflection can be 
 set as some external flag. Weird.
 
+## Different warp and weft
+
+If warp and weft have different threadount, their threadounts are 
+separated by a dot `.` character:
+```
+B24 W4 B24 R2 . K24 G24 W2
+```
+
 ## Examples
 
 Repeating sett:
