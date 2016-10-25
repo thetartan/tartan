@@ -22,6 +22,10 @@ function sourceFragmentData(source, offset, length) {
   };
 }
 
+function NotImplemented() {
+  return new Error('This feature is not implemented');
+}
+
 function CreateTokenError(message) {
   return new Error(message);
 }
@@ -88,6 +92,7 @@ function InvalidColorFormat(token, colorMap) {
   return error;
 }
 
+module.exports.NotImplemented = NotImplemented;
 module.exports.CreateTokenError = CreateTokenError;
 module.exports.InvalidToken = InvalidToken;
 module.exports.ZeroWidthStripe = ZeroWidthStripe;

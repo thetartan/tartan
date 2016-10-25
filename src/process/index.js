@@ -69,6 +69,7 @@ function factory(processors, options) {
 module.exports = factory;
 
 module.exports.extractColors = require('./extract-colors');
+module.exports.fold = require('./fold');
 module.exports.matchSquareBrackets = require('./match-square-brackets');
 module.exports.mergeStripes = require('./merge-stripes');
 module.exports.optimize = require('./optimize');
@@ -80,4 +81,7 @@ module.exports.removeEmptySquareBrackets =
 module.exports.removeTokens = require('./remove-tokens');
 module.exports.removeZeroWidthStripes = require('./remove-zero-width-stripes');
 module.exports.splitWarpAndWeft = require('./split-warp-and-weft');
+module.exports.squareBracketsToParenthesis =
+  require('./square-brackets-to-parenthesis');
+module.exports.squareBracketsToPivots = require('./square-brackets-to-pivots');
 module.exports.unfold = require('./unfold');

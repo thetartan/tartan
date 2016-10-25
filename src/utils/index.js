@@ -115,6 +115,14 @@ function pivotToStripe(token) {
   return token;
 }
 
+function stripeToPivot(token) {
+  if (isStripe(token)) {
+    token = _.clone(token);
+    token.type = TokenType.pivot;
+  }
+  return token;
+}
+
 function newToken(type, value) {
   var result = {
     type: type,
@@ -243,6 +251,7 @@ module.exports.isClosingParenthesis = isClosingParenthesis;
 module.exports.isLiteral = isLiteral;
 
 module.exports.pivotToStripe = pivotToStripe;
+module.exports.stripeToPivot = stripeToPivot;
 
 module.exports.newToken = newToken;
 module.exports.newTokenInvalid = newTokenInvalid;
