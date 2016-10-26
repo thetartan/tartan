@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var assert = require('chai').assert;
-var parserFactory = require('../../src/parse/stripe');
+var parserFactory = require('../../src/parse/token/stripe');
 
 var acceptedSyntax = [
   'R1',

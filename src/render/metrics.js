@@ -4,6 +4,11 @@ var _ = require('lodash');
 var defaults = require('../defaults');
 var rendering = require('./index');
 
+var defaultOptions = {
+  // Also options for `pattern` renderer
+  weave: defaults.weave.serge
+};
+
 function prepareWeave(weave, defaultWeave) {
   return _.isArray(weave) && weave.length == 2 ? weave : defaultWeave;
 }
@@ -33,20 +38,24 @@ function getPatternMetrics(pattern, weave) {
   };
 }
 
-function factory(options, process) {
+function factory(options) {
   return function(sett) {
     var result = null;
     if (_.isObject(sett)) {
       result = {};
-      sett = rendering.pattern(options, process)(sett);
+      var warpIsSameAsWeft = sett.weft === sett.warp;
+      sett = rendering.pattern(options)(sett);
 
-      result.weave = prepareWeave(sett.weave, defaults.weave.serge);
+      options = _.extend({}, defaultOptions, options);
+      result.weave = prepareWeave(options.weave, defaults.weave.serge);
 
       if (sett.warp) {
         result.warp = getPatternMetrics(sett.warp, result.weave);
       }
       if (sett.weft) {
-        if (sett.weft !== sett.warp) {
+        if (warpIsSameAsWeft) {
+          result.weft = result.warp;
+        } else {
           result.weft = getPatternMetrics(sett.weft, result.weave);
         }
       }

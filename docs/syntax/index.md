@@ -18,9 +18,3 @@ But almost all of them have some common or similar things.
 * [Defining a palette](palette.md)
 * [Syntax by Scottish Tartans Authority](sta.md)
 * [Syntax by Weddlist (Tartan Definition Format)](tdf.md)
-
-## This library
-
-For details about supported syntax constructions please refer to 
-[API documentation](api/parsing.md) as API is modular and configurable, 
-so actual parser can support or not support some features depending on it's code. 

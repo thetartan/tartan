@@ -1,5 +1,10 @@
 # Tartan docs
 
+**Important note from author**
+
+I reduced amount of docs because I have no time to update it each time 
+I change the code. Now docs will contain only info that cannot be
+taken from the code. Please understand me.
 
 **Table of contents:**
 
@@ -8,11 +13,6 @@
   * [Defining a palette](syntax/palette.md)
   * [Syntax by Scottish Tartans Authority](syntax/sta.md)
   * [Syntax by Weddlist (Tartan Definition Format)](syntax/tdf.md)
-* [API reference](api/index.md):
-  * [Parsing](api/parsing/index.md)   
-  * [Processing](api/processing/index.md)   
-  * [Rendering](api/rendering/index.md)
-  * [Examples](api/examples/index.md)
 
 **References**
 

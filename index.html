@@ -78,36 +78,35 @@
       return tartan.parse([
         tartan.parse.stripe(),
         tartan.parse.color(),
-        tartan.parse.parenthesis(),
-        tartan.parse.squareBrackets(),
+        tartan.parse.literal('['),
+        tartan.parse.literal(']'),
         tartan.parse.pivot()
       ], {
-        failOnInvalidTokens: false
-      }, tartan.process([
-        tartan.process.optimize(),
-      ]));
+        failOnInvalidTokens: false,
+        buildSyntaxTree: tartan.syntax.default({
+          filterTokens: tartan.filter.removeTokens(
+            tartan.defaults.insignificantTokens
+          ),
+          transformSett: tartan.transform.optimize()
+        })
+      });
     }
 
     function createCanvasRenderer(sett) {
       return tartan.render.canvas(sett, {
+        //weave: [1, 1],
         skipUnsupportedTokens: true,
-        skipInvalidColors: true
-      }, tartan.process([
-        tartan.process.unfold({
-          ignoreOrphanedPivots: true
-        })
-      ]));
+        skipInvalidColors: true,
+        transformSett: tartan.transform.flatten()
+      });
     }
 
     function createMetricsCalculator() {
       return tartan.render.metrics({
         skipUnsupportedTokens: true,
-        skipInvalidColors: true
-      }, tartan.process([
-        tartan.process.unfold({
-          ignoreOrphanedPivots: true
-        })
-      ]));
+        skipInvalidColors: true,
+        transformSett: tartan.transform.flatten()
+      });
     }
 
     function createFormatter() {

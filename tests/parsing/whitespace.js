@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var assert = require('chai').assert;
-var parserFactory = require('../../src/parse/whitespace');
+var parserFactory = require('../../src/parse/token/whitespace');
 
 var acceptedSyntax = [
   '   ',

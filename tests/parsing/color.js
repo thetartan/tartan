@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var assert = require('chai').assert;
-var parserFactory = require('../../src/parse/color');
+var parserFactory = require('../../src/parse/token/color');
 
 var acceptedSyntax = [
   'R#f00;',

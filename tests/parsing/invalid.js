@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var assert = require('chai').assert;
-var parserFactory = require('../../src/parse/invalid');
+var parserFactory = require('../../src/parse/token/invalid');
 
 // Any token will be invalid
 var acceptedSyntax = [

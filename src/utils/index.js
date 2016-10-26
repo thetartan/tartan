@@ -9,8 +9,6 @@ var TokenType = {
   color: 'color',
   stripe: 'stripe',
   pivot: 'pivot',
-  parenthesis: 'parenthesis',
-  squareBracket: 'square-bracket',
   literal: 'literal'
 };
 
@@ -41,18 +39,15 @@ function normalizeColor(str) {
 }
 
 function normalizeColorMap(colors) {
-  return _.chain(colors)
-    .map(function(value, name) {
-      name = isValidName(name) ? name : null;
-      value = normalizeColor(value);
-      if (name && value) {
-        return [name.toUpperCase(), value];
-      }
-      return null;
-    })
-    .filter()
-    .fromPairs()
-    .value();
+  var result = {};
+  _.each(colors, function(value, name) {
+    name = isValidName(name) ? name : null;
+    value = normalizeColor(value);
+    if (name && value) {
+      result[name.toUpperCase()] = value;
+    }
+  });
+  return result;
 }
 
 function isToken(token, type) {
@@ -79,32 +74,32 @@ function isPivot(token) {
   return isToken(token, TokenType.pivot);
 }
 
+function isLiteral(token) {
+  return isToken(token, TokenType.literal);
+}
+
 function isSquareBracket(token) {
-  return isToken(token, TokenType.squareBracket);
+  return isLiteral(token) && ((token.value == '[') || (token.value == ']'));
 }
 
 function isOpeningSquareBracket(token) {
-  return isSquareBracket(token) && (token.value == '[');
+  return isLiteral(token) && (token.value == '[');
 }
 
 function isClosingSquareBracket(token) {
-  return isSquareBracket(token) && (token.value == ']');
+  return isLiteral(token) && (token.value == ']');
 }
 
 function isParenthesis(token) {
-  return isToken(token, TokenType.parenthesis);
+  return isLiteral(token) && ((token.value == '(') || (token.value == ')'));
 }
 
 function isOpeningParenthesis(token) {
-  return isParenthesis(token) && (token.value == '(');
+  return isLiteral(token) && (token.value == '(');
 }
 
 function isClosingParenthesis(token) {
-  return isParenthesis(token) && (token.value == ')');
-}
-
-function isLiteral(token) {
-  return isToken(token, TokenType.literal);
+  return isLiteral(token) && (token.value == ')');
 }
 
 function pivotToStripe(token) {
@@ -193,34 +188,32 @@ function newTokenPivot(name, count) {
 
 function newTokenSquareBracket(value) {
   if ((value != '[') && (value != ']')) {
-    throw new errors.CreateTokenError('Invalid value ' + JSON.stringify(value) +
-      ' for token ' + TokenType.squareBracket);
+    throw new errors.CreateTokenError('Invalid value ' + JSON.stringify(value));
   }
-  return newToken(TokenType.squareBracket, value);
+  return newToken(TokenType.literal, value);
 }
 
 function newTokenOpeningSquareBracket() {
-  return newToken(TokenType.squareBracket, '[');
+  return newToken(TokenType.literal, '[');
 }
 
 function newTokenClosingSquareBracket() {
-  return newToken(TokenType.squareBracket, ']');
+  return newToken(TokenType.literal, ']');
 }
 
 function newTokenParenthesis(value) {
   if ((value != '(') && (value != ')')) {
-    throw new errors.CreateTokenError('Invalid value ' + JSON.stringify(value) +
-      ' for token ' + TokenType.parenthesis);
+    throw new errors.CreateTokenError('Invalid value ' + JSON.stringify(value));
   }
-  return newToken(TokenType.parenthesis, value);
+  return newToken(TokenType.literal, value);
 }
 
 function newTokenOpeningParenthesis() {
-  return newToken(TokenType.parenthesis, '(');
+  return newToken(TokenType.literal, '(');
 }
 
 function newTokenClosingParenthesis() {
-  return newToken(TokenType.parenthesis, ')');
+  return newToken(TokenType.literal, ')');
 }
 
 function newTokenLiteral(value) {

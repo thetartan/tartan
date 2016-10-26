@@ -4,6 +4,11 @@ var _ = require('lodash');
 var defaults = require('../defaults');
 var rendering = require('./index');
 
+var defaultOptions = {
+  // Also options for `pattern` renderer
+  weave: defaults.weave.serge
+};
+
 function clearCanvas(context, options) {
   if (!options.repeat) {
     context.clearRect(0, 0, options.width, options.height);
@@ -179,15 +184,21 @@ function renderEmpty() {
   return {x: 0, y: 0};
 }
 
-function factory(sett, options, process) {
+function factory(sett, options) {
   if (!_.isObject(sett)) {
     return renderEmpty;
   }
-  sett = rendering.pattern(options, process)(sett);
+  sett = rendering.pattern(options)(sett);
+  var warpIsSameAsWeft = sett.weft === sett.warp;
 
-  var weave = prepareWeave(sett.weave, defaults.weave.serge);
+  options = _.extend({}, defaultOptions, options);
+  var weave = prepareWeave(options.weave, defaults.weave.serge);
+
   var warp = preparePattern(chooseFirstArray(sett.warp, sett.weft), weave);
-  var weft = preparePattern(chooseFirstArray(sett.weft, sett.warp), weave);
+  var weft = warp;
+  if (!warpIsSameAsWeft) {
+    weft = preparePattern(chooseFirstArray(sett.weft, sett.warp), weave);
+  }
 
   if ((warp.length == 0) && (weft.length == 0)) {
     return renderEmpty;

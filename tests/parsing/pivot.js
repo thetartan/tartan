@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var assert = require('chai').assert;
-var parserFactory = require('../../src/parse/pivot');
+var parserFactory = require('../../src/parse/token/pivot');
 
 var acceptedSyntax = [
   'R/1',

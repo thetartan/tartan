@@ -4,6 +4,8 @@ var _ = require('lodash');
 var utils = require('../utils');
 
 var defaultOptions = {
+  // function to transform newly built AST: (sett) => { return modifiedSett; }
+  transformSett: null,
   formatters: {
     color: function(token) {
       return token.name + token.color + ';';
@@ -17,6 +19,13 @@ var defaultOptions = {
   },
   defaultFormatter: function(token) {
     return token.value;
+  },
+  prepareNestedBlock: function(nestedBlock) {
+    var result = [];
+    result.push(utils.newTokenOpeningSquareBracket());
+    result = result.concat(nestedBlock);
+    result.push(utils.newTokenClosingSquareBracket());
+    return result;
   },
   joinComponents: function(formattedSett, originalSett) {
     return utils.trim([
@@ -66,15 +75,44 @@ function renderTokens(tokens, options) {
     .value());
 }
 
-function render(warp, weft, colors, sett, options) {
+function flattenTokens(tokens, options) {
+  var result = [];
+  var current;
+
+  for (var i = 0; i < tokens.length; i++) {
+    current = tokens[i];
+    if (_.isArray(current)) {
+      // Flatten nested block
+      current = options.prepareNestedBlock(current);
+      current = flattenTokens(current, options);
+      [].push.apply(result, current);
+    } else {
+      result.push(current);
+    }
+  }
+
+  return result;
+}
+
+function render(sett, options) {
+  var warpIsSameAsWeft = sett.warp === sett.weft;
+
+  var warp = flattenTokens(sett.warp, options);
+  var weft = warp;
+  if (!warpIsSameAsWeft) {
+    weft = flattenTokens(sett.weft, options);
+  }
+
+  var colors = _.extend({}, options.defaultColors, sett.colors);
   if (options.outputOnlyUsedColors) {
     colors = _.extend({},
-      getOnlyUsedColors(warp, colors),
-      getOnlyUsedColors(weft, colors)
+      getOnlyUsedColors(sett.warp, colors),
+      getOnlyUsedColors(sett.weft, colors)
     );
   }
-  colors = renderTokens(colorsAsTokens(colors), options);
+  colors = colorsAsTokens(colors, options);
 
+  colors = renderTokens(colors, options);
   warp = renderTokens(warp, options);
   weft = renderTokens(weft, options);
 
@@ -89,13 +127,16 @@ function render(warp, weft, colors, sett, options) {
   }, sett));
 }
 
-function factory(options, process) {
+function factory(options) {
   options = _.merge({}, defaultOptions, options);
   if (!_.isFunction(options.defaultFormatter)) {
     options.defaultFormatter = defaultOptions.defaultFormatter;
   }
   if (!_.isFunction(options.joinComponents)) {
     options.joinComponents = defaultOptions.joinComponents;
+  }
+  if (!_.isFunction(options.prepareNestedBlock)) {
+    options.prepareNestedBlock = defaultOptions.prepareNestedBlock;
   }
   if (!_.isObject(options.formatters)) {
     options.formatters = {};
@@ -112,13 +153,11 @@ function factory(options, process) {
     if (!_.isObject(sett)) {
       return '';
     }
-    if (_.isFunction(process)) {
-      sett = process(sett);
+    if (_.isFunction(options.transformSett)) {
+      sett = options.transformSett(sett);
     }
 
-    var colors = _.extend({}, options.defaultColors, sett.colors);
-
-    return render(sett.warp, sett.weft, colors, sett, options);
+    return render(sett, options);
   };
 }
 

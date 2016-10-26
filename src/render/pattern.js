@@ -8,7 +8,9 @@ var utils = require('../utils');
 var defaultOptions = {
   skipUnsupportedTokens: false,
   skipInvalidColors: false,
-  defaultColors: defaults.colors
+  defaultColors: defaults.colors,
+  // function to transform newly built AST: (sett) => { return modifiedSett; }
+  transformSett: null
 };
 
 function isSupportedToken(token) {
@@ -66,15 +68,15 @@ function render(tokens, colors, options) {
     .value();
 }
 
-function factory(options, process) {
+function factory(options) {
   options = _.extend({}, defaultOptions, options);
 
   return function(sett) {
     if (!_.isObject(sett)) {
       return {};
     }
-    if (_.isFunction(process)) {
-      sett = process(sett);
+    if (_.isFunction(options.transformSett)) {
+      sett = options.transformSett(sett);
     }
 
     var colors = _.extend({}, options.defaultColors, sett.colors);

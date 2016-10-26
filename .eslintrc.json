@@ -4,6 +4,7 @@
     "require-jsdoc": 0,
     "eqeqeq": 0,
     "no-constant-condition": 0,
-    "no-negated-condition": 0
+    "no-negated-condition": 0,
+    "no-implicit-coercion": 0
   }
 }

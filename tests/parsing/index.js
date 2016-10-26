@@ -21,14 +21,14 @@ describe('Parser', function() {
       done();
     });
 
-    it('Should throw parse invalid tokens', function(done) {
+    it('Should parse invalid tokens', function(done) {
       var parse = tartan.parse([], {
         allowInvalidTokens: true
       });
       var sett = parse('R10 K10');
 
-      assert.isObject(sett);
-      assert.equal(sett.warp.length, 3); // invalid, whitespace, invalid
+      assert.isArray(sett);
+      assert.equal(sett.length, 3); // invalid, whitespace, invalid
 
       done();
     });
