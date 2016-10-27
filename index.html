@@ -92,24 +92,9 @@
     var canvas = document.querySelector('#canvas-container canvas');
 
     function createParser() {
-      return tartan.parse([
-        tartan.parse.stripe(),
-        tartan.parse.color(),
-        tartan.parse.literal('['),
-        tartan.parse.literal(']'),
-        tartan.parse.literal('//'),
-        tartan.parse.pivot()
-      ], {
+      return tartan.schema.default.parse({
         failOnInvalidTokens: false,
-        buildSyntaxTree: tartan.syntax.default({
-          filterTokens: tartan.filter.removeTokens(
-            tartan.defaults.insignificantTokens
-          ),
-          isWarpAndWeftSeparator: function(token) {
-            return tartan.utils.isLiteral(token) && (token.value == '//');
-          },
-          transformSett: tartan.transform.optimize()
-        })
+        transformSett: tartan.transform.optimize()
       });
     }
 
@@ -131,7 +116,7 @@
     }
 
     function createFormatter() {
-      return tartan.render.format({
+      return tartan.schema.default.format({
         outputOnlyUsedColors: true
       });
     }

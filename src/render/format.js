@@ -38,9 +38,14 @@ var defaultOptions = {
   outputOnlyUsedColors: false
 };
 
-function getOnlyUsedColors(tokens, colors) {
-  var result = {};
+function getOnlyUsedColors(tokens, colors, result) {
+  if (!_.isObject(result)) {
+    result = {};
+  }
   _.each(tokens, function(token) {
+    if (_.isArray(token)) {
+      result = getOnlyUsedColors(token, colors, result);
+    }
     if (utils.isStripe(token) || utils.isPivot(token)) {
       if (colors[token.name]) {
         result[token.name] = colors[token.name];
