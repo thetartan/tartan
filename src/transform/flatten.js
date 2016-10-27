@@ -23,7 +23,8 @@ function flatten(tokens, isNested) {
   }
 
   // If we are flattening nested block, we need to reflect it
-  if (isNested) {
+  // Do not reflect blocks with single stripe
+  if (isNested && (result.length > 1)) {
     var rest = result.slice(0, result.length - 1);
     rest.reverse();
     result = result.concat(rest);
