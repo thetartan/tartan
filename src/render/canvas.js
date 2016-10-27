@@ -180,7 +180,13 @@ function getMetrics(weave, preparedWarp, preparedWeft) {
   };
 }
 
-function renderEmpty() {
+function renderEmpty(canvas) {
+  var width = canvas.offsetWidth;
+  var height = canvas.offsetHeight;
+  if ((width > 0) && (height > 0)) {
+    var context = canvas.getContext('2d');
+    context.clearRect(0, 0, width, height);
+  }
   return {x: 0, y: 0};
 }
 
