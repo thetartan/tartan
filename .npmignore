@@ -1,5 +1,2 @@
 # This file is for npm. It overrides .gitignore
-
-node_modules/*
 .idea
-npm-debug.log
