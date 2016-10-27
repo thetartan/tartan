@@ -5,6 +5,13 @@
   <title>Tartan Demo</title>
 
   <style>
+    h1 {
+      font-family: Hind,"Open Sans",sans-serif;
+      margin: 0;
+      padding: 0;
+      font-size: 24px;
+    }
+
     .container {
       position: relative;
       margin: 0;
@@ -13,9 +20,7 @@
       text-align: left;
     }
 
-    #editor-container,
-    #canvas-container,
-    #formatted-container {
+    .section-wrapper {
       margin: 30px 50px;
     }
 
@@ -53,17 +58,26 @@
   </style>
 </head>
 <body>
-  <div id="editor-container">
+  <div class="section-wrapper">
+    <h1 id="version">Tartan <span></span> demo</h1>
+  </div>
+
+  <div id="editor-container" class="section-wrapper">
     <div class="container"><textarea>r#f00; R/40 Y1 R/40 [K8 Y4] Y5 R15 R5 T4 T6 [K8 W4] W/15 K4 Y/1</textarea></div>
     <div style="margin-top: 10px;"><button type="button">Rebuild</button></div>
   </div>
 
-  <div id="canvas-container" class="container">
+  <div id="canvas-container" class="section-wrapper container">
     <canvas></canvas>
   </div>
 
-  <div id="formatted-container" class="container">
+  <div id="formatted-container" class="section-wrapper container">
     <pre></pre>
+  </div>
+
+  <div class="section-wrapper">
+    <a href="https://github.com/kravets-levko/tartan/"
+      target="_blank">View repository on GitHub</a>
   </div>
 
 <script type="text/javascript" src="dist/tartan.js"></script>
@@ -71,6 +85,8 @@
 <script type="text/javascript">
   (function() {
     var enableTimers = false;
+
+    document.querySelector('#version span').innerHTML = 'v' + tartan.version;
 
     var canvas = document.querySelector('#canvas-container canvas');
 
@@ -80,6 +96,7 @@
         tartan.parse.color(),
         tartan.parse.literal('['),
         tartan.parse.literal(']'),
+        tartan.parse.literal('//'),
         tartan.parse.pivot()
       ], {
         failOnInvalidTokens: false,
@@ -87,6 +104,9 @@
           filterTokens: tartan.filter.removeTokens(
             tartan.defaults.insignificantTokens
           ),
+          isWarpAndWeftSeparator: function(token) {
+            return tartan.utils.isLiteral(token) && (token.value == '//');
+          },
           transformSett: tartan.transform.optimize()
         })
       });
