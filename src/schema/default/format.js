@@ -1,9 +1,11 @@
 'use strict';
 
+var _ = require('lodash');
 var render = require('../../render');
 var utils = require('../../utils');
 
 function factory(options) {
+  options = _.extend({}, options);
   options.joinComponents = function(formattedSett, originalSett) {
     var threadcount = formattedSett.warp;
     var weft = formattedSett.weft;

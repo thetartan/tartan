@@ -9,7 +9,7 @@ var utils = require('../../utils');
 
 // Options for: tartan.parse() + `transformSett` for `buildSyntaxTree`
 function factory(options) {
-  options = _.clone(options);
+  options = _.extend({}, options);
   options.buildSyntaxTree = syntax.default({
     filterTokens: filter.removeTokens(defaults.insignificantTokens),
     isWarpAndWeftSeparator: function(token) {
