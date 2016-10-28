@@ -8,7 +8,6 @@ var matchSquareBrackets = require('../filter/match-square-brackets');
 
 var defaultOptions = {
   // Also options for `pivotsToSquareBrackets`
-  // Also options for `optimizeSyntaxTree`
   failOnUnsupportedTokens: true,
   // function to filter parsed tokens: (tokens) => { return modifiedTokens; }
   filterTokens: null,

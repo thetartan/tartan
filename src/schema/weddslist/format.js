@@ -14,34 +14,39 @@ function factory(options) {
   ]);
   options.formatters = {
     color: function(token) {
-      return token.name + token.color + ';';
+      return token.name + token.color;
     },
     stripe: function(token) {
       return token.name + token.count;
-    },
-    pivot: function(token) {
-      return token.name + '/' + token.count;
     }
   };
   options.prepareNestedBlock = function(nestedBlock) {
-    var result = [];
-    result.push(utils.stripeToPivot(_.first(nestedBlock)));
+    var result = _.clone(nestedBlock);
     if (nestedBlock.length > 2) {
-      result = result.concat(nestedBlock.slice(1, nestedBlock.length - 1));
+      result.splice(1, 0, utils.newTokenOpeningParenthesis());
+      result.splice(-1, 0, utils.newTokenClosingParenthesis());
     }
-    result.push(utils.stripeToPivot(_.last(nestedBlock)));
     return result;
   };
   options.prepareRootBlock = function(block) {
-    return block;
+    var result = _.clone(block);
+    if ((result.length == 1) && _.isArray(result[0])) {
+      return result;
+    }
+    result.splice(0, 0, utils.newTokenOpeningParenthesis());
+    result.push(utils.newTokenClosingParenthesis());
+    return result;
   };
   options.joinComponents = function(formattedSett, originalSett) {
-    var threadcount = formattedSett.warp;
-    var weft = formattedSett.weft;
-    if ((weft != '') && (weft != formattedSett.warp)) {
-      threadcount += ' // ' + formattedSett.weft;
+    var warp = '[ ' + formattedSett.warp
+      .replace(/\(\s/g, '(').replace(/\s\)/g, ')');
+    var weft = '';
+    if (formattedSett.weft != formattedSett.warp) {
+      weft = '] ' + formattedSett.weft
+        .replace(/\(\s/g, '(').replace(/\s\)/g, ')');
     }
-    return utils.trim([formattedSett.colors, threadcount].join('\n'));
+
+    return utils.trim([formattedSett.colors, warp, weft].join('\n'));
   };
   return render.format(options);
 }

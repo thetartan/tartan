@@ -14,6 +14,9 @@ function factory(options) {
       return token.name + token.count;
     }
   };
+  options.prepareRootBlock = function(block) {
+    return block;
+  };
   options.joinComponents = function(formattedSett, originalSett) {
     var threadcount = formattedSett.warp;
     var weft = formattedSett.weft;

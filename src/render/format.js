@@ -27,6 +27,9 @@ var defaultOptions = {
     result.push(utils.newTokenClosingSquareBracket());
     return result;
   },
+  prepareRootBlock: function(block) {
+    return block;
+  },
   joinComponents: function(formattedSett, originalSett) {
     return utils.trim([
       formattedSett.colors,
@@ -80,16 +83,20 @@ function renderTokens(tokens, options) {
     .value());
 }
 
-function flattenTokens(tokens, options) {
+function flattenTokens(tokens, options, isNested) {
   var result = [];
   var current;
+
+  if (!isNested) {
+    tokens = options.prepareRootBlock(tokens);
+  }
 
   for (var i = 0; i < tokens.length; i++) {
     current = tokens[i];
     if (_.isArray(current)) {
       // Flatten nested block
       current = options.prepareNestedBlock(current);
-      current = flattenTokens(current, options);
+      current = flattenTokens(current, options, true);
       [].push.apply(result, current);
     } else {
       result.push(current);
@@ -142,6 +149,9 @@ function factory(options) {
   }
   if (!_.isFunction(options.prepareNestedBlock)) {
     options.prepareNestedBlock = defaultOptions.prepareNestedBlock;
+  }
+  if (!_.isFunction(options.prepareRootBlock)) {
+    options.prepareRootBlock = defaultOptions.prepareRootBlock;
   }
   if (!_.isObject(options.formatters)) {
     options.formatters = {};

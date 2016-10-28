@@ -4,6 +4,16 @@ var _ = require('lodash');
 var utils = require('../utils');
 
 function processTokens(tokens) {
+  if (tokens.length % 2 != 0) {
+    return tokens;
+  }
+  // Smallest reflective sett contains 3 stripes in threadcount or
+  // 4 stripes when unfolded, i.e. R/10 K2 Y/2 => R10 K2 Y2 K2;
+  // R/10 K/2 => R10 K2
+  if (tokens.length < 4) {
+    return tokens;
+  }
+
   var result = [];
   var i = 1;
   var j = tokens.length - 1;

@@ -31,6 +31,11 @@ function CreateTokenError(message) {
 }
 
 function InvalidToken(source, offset, length) {
+  if ((arguments.length == 1) && _.isObject(source)) {
+    offset = source.offset;
+    length = source.length;
+    source = source.source;
+  }
   var error = new Error('Invalid token ' +
     substrNearOffset(source, offset));
   error.data = sourceFragmentData(source, offset, length);

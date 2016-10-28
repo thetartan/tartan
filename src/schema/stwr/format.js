@@ -35,6 +35,9 @@ function factory(options) {
     result.push(utils.stripeToPivot(_.last(nestedBlock)));
     return result;
   };
+  options.prepareRootBlock = function(block) {
+    return block;
+  };
   options.joinComponents = function(formattedSett, originalSett) {
     var threadcount = formattedSett.warp;
     var weft = formattedSett.weft;
