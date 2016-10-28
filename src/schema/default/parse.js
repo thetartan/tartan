@@ -19,12 +19,12 @@ function factory(options) {
   });
 
   return parse([
-    parse.stripe(),
-    parse.color(),
+    parse.stripe(options),
+    parse.color(options),
     parse.literal('['),
     parse.literal(']'),
     parse.literal('//'),
-    parse.pivot()
+    parse.pivot(options)
   ], options);
 }
 

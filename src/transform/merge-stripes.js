@@ -3,18 +3,28 @@
 var _ = require('lodash');
 var utils = require('../utils');
 
-// Do not merge last stripe in nested blocks as it is a pivot that will
-// be in center after reflecting!
-// Example: [R20 R10 K10 K5]
-// Wrong: [R30 K15] => R30 K15 K15 R30 => R30 K30 R30
-// Right: [R30 K10 K5] => R30 K10 K5 K10 R30 => R30 K25 R30
-function processTokens(tokens, isNested) {
+// Do not merge first and last stripe in the only nested block in a root
+// as they are pivots! For other nested blocks, first pivot can be merged.
+// Example: [R20 R10 R5 Y2 K10 K5]
+// Wrong: [R35 Y2 K15] => R35 Y2 K15 Y2
+// Right: [R20 R15 Y2 K10 K5]
+//        => R20 R15 Y2 K10 K5 K10 Y2 R15
+//        => R35 Y2 K25 Y2 R15
+function processTokens(tokens, isNested, doNotMergeFirstPivot) {
   var result = [];
+
+  // Special case
+  if (!isNested && (tokens.length == 1) && (_.isArray(tokens[0]))) {
+    result.push(processTokens(tokens[0], true, true));
+    return result;
+  }
+
   var token;
   var prev;
-  var correction = isNested ? 1 : 0;
+  var correctionStart = doNotMergeFirstPivot ? 1 : 0;
+  var correctionEnd = isNested ? 1 : 0;
 
-  for (var i = 0; i < tokens.length - correction; i++) {
+  for (var i = correctionStart; i < tokens.length - correctionEnd; i++) {
     token = tokens[i];
     if (_.isArray(token)) {
       result.push(processTokens(token, true));
@@ -33,10 +43,17 @@ function processTokens(tokens, isNested) {
     result.push(token);
   }
 
-  // For nested blocks, keep last stripe
-  token = _.last(tokens);
-  if (isNested && (tokens.length > 1) && token) {
-    result.push(token);
+  // For nested blocks, keep first (depending on doNotMergeFirstPivot)
+  // and last stripe
+  if (isNested) {
+    token = _.first(tokens);
+    if (token && doNotMergeFirstPivot) {
+      result.splice(0, 0, token);
+    }
+    token = _.last(tokens);
+    if (token && (tokens.length > 1)) {
+      result.push(token);
+    }
   }
 
   return result;

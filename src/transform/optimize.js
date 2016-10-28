@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var utils = require('../utils');
+var removeZeroWidthStripes = require('./remove-zero-width-stripes');
 var mergeStripes = require('./merge-stripes');
 
 var defaultOptions = {
@@ -10,28 +11,6 @@ var defaultOptions = {
   mergeStripes: true,
   unfoldSingleColorBlocks: true
 };
-
-function removeZeroWidthStripes(tokens) {
-  var result = [];
-  var token;
-  for (var i = 0; i < tokens.length; i++) {
-    token = tokens[i];
-    // Recursive processing of nested blocks
-    if (_.isArray(token)) {
-      result.push(removeZeroWidthStripes(token));
-    } else
-    // Check stripes
-    if (utils.isStripe(token)) {
-      if (token.count > 0) {
-        result.push(token);
-      }
-    } else {
-      // Keep everything else
-      result.push(token);
-    }
-  }
-  return result;
-}
 
 function removeEmptyBlocks(tokens) {
   var result = [];
@@ -55,10 +34,15 @@ function removeEmptyBlocks(tokens) {
 }
 
 // [R20] => R20
-// [R20 R10 R5] => R20 R10 R5 R10 R20 => R65
-function unfoldSingleColorBlocks(tokens, isNested) {
+// [R20 R10 R5] => R20 R10 R5 R10 => R65
+function unfoldSingleColorBlocks(tokens, isNested, doNotMergeFirstPivot) {
   if (tokens.length == 0) {
     return tokens;
+  }
+
+  // Special case
+  if (!isNested) {
+    doNotMergeFirstPivot = (tokens.length == 1) && (_.isArray(tokens[0]));
   }
 
   var result = _.clone(tokens); // We will edit it in-place
@@ -71,7 +55,7 @@ function unfoldSingleColorBlocks(tokens, isNested) {
     token = result[i];
     // Process nested blocks
     if (_.isArray(token)) {
-      token = unfoldSingleColorBlocks(token, true);
+      token = unfoldSingleColorBlocks(token, true, doNotMergeFirstPivot);
       result[i] = token.length != 1 ? token : _.first(token);
     }
   }
@@ -93,27 +77,27 @@ function unfoldSingleColorBlocks(tokens, isNested) {
 
   // If we are here - we have all tokens with the same color
 
-  var count = 0;
-  // For nested blocks, add each color twice (except of the last one)
+  // For nested blocks, add each color twice (except of the first and last one)
   // as they will be duplicated after reflecting
   var multiplier = isNested ? 2 : 1;
-  // Add each color twice, except of last one
-  for (i = 0; i < result.length - 1; i++) {
+  var count = _.first(result).count;
+  if (!doNotMergeFirstPivot) {
+    count *= multiplier;
+  }
+  for (i = 1; i < result.length - 1; i++) {
     count += multiplier * result[i].count;
   }
-  count += _.last(result).count;
+  if (result.length > 1) {
+    // Avoid adding first element twice if there is the only stripe
+    count += _.last(result).count;
+  }
 
   result = utils.newTokenStripe(firstToken.name, count);
   return isNested ? result : [result];
 }
 
 function processTokens(tokens, options) {
-  // First of all, remove zero-width stripes. After that we
-  // may create empty blocks
-  if (options.removeZeroWidthStripes) {
-    tokens = removeZeroWidthStripes(tokens);
-  }
-  // Then remove empty blocks
+  // Remove empty blocks
   if (options.removeEmptyBlocks) {
     tokens = removeEmptyBlocks(tokens);
   }
@@ -127,15 +111,20 @@ function processTokens(tokens, options) {
 function transform(sett, options) {
   var result = _.clone(sett);
 
-  var warpIsSameAsWeft = sett.warp === sett.weft;
-  if (_.isArray(sett.warp)) {
-    result.warp = processTokens(sett.warp, options);
+  // First of all, remove zero-width stripes. It may create empty blocks
+  if (options.removeZeroWidthStripes) {
+    result = removeZeroWidthStripes(options)(result);
   }
-  if (_.isArray(sett.weft)) {
+
+  var warpIsSameAsWeft = result.warp === result.weft;
+  if (_.isArray(result.warp)) {
+    result.warp = processTokens(result.warp, options);
+  }
+  if (_.isArray(result.weft)) {
     if (warpIsSameAsWeft) {
       result.weft = result.warp;
     } else {
-      result.weft = processTokens(sett.weft, options);
+      result.weft = processTokens(result.weft, options);
     }
   }
 

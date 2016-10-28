@@ -94,7 +94,10 @@
     function createParser() {
       return tartan.schema.default.parse({
         failOnInvalidTokens: false,
-        transformSett: tartan.transform.optimize()
+        allowZeroWidthStripes: true,
+        transformSett: tartan.transform.optimize({
+          keepZeroWidthPivots: true
+        })
       });
     }
 

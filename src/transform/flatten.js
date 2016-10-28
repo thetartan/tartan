@@ -30,6 +30,17 @@ function flatten(tokens, isNested) {
     result = result.concat(rest);
   }
 
+  // Special case.
+  // All nested blocks should be reflected relative to the last pivot;
+  // first pivot is duplicated.
+  // But if entire threadcount should be reflected, algorithm a bit differs:
+  // R/10 K20 Y10 W/2 should become R10 K20 Y10 W2 Y10 K20 - without last R20.
+  // So let's check this case:
+  if (!isNested && (tokens.length == 0) && _.isArray(tokens[0])) {
+    result.pop();
+  }
+
+
   return result;
 }
 
