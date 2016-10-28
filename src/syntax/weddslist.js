@@ -46,6 +46,7 @@ function splitWarpAndWeft(tokens, options) {
                 continue;
               }
               break;
+            default: break;
           }
         }
         break;
@@ -70,6 +71,7 @@ function splitWarpAndWeft(tokens, options) {
                 continue;
               }
               break;
+            default: break;
           }
         }
         break;
@@ -94,6 +96,7 @@ function splitWarpAndWeft(tokens, options) {
                 continue;
               }
               break;
+            default: break;
           }
         }
         break;

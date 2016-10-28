@@ -60,7 +60,7 @@ function factory(options) {
   options = _.extend({}, defaultOptions, options);
   return function(sett) {
     return transform(sett, options);
-  }
+  };
 }
 
 module.exports = factory;

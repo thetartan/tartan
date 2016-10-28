@@ -6,7 +6,6 @@ var parse = require('../../parse');
 var filter = require('../../filter');
 var syntax = require('../../syntax');
 var transform = require('../../transform');
-var utils = require('../../utils');
 
 // Options for: tartan.parse() + `transformSett` for `buildSyntaxTree`
 function factory(options) {

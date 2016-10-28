@@ -64,7 +64,7 @@
   </div>
 
   <div id="editor-container" class="section-wrapper">
-    <div class="container"><textarea>r#f00; R/40 Y1 R/40 [K8 Y4] Y5 R15 R5 T4 T6 [K8 W4] W/15 K4 Y/1</textarea></div>
+    <div class="container"><textarea></textarea></div>
     <div style="margin-top: 10px;"><button type="button">Rebuild</button></div>
   </div>
 
@@ -89,9 +89,12 @@
 
     document.querySelector('#version span').innerHTML = 'v' + tartan.version;
 
+    var editor = document.querySelector('#editor-container textarea');
+    editor.value = 'r=ffcacaRED; R/40 Y1 R40 Y5 R15 R5 T4 T6 W15 K4 Y/1';
+
     var canvas = document.querySelector('#canvas-container canvas');
 
-    var schema = tartan.schema.default;
+    var schema = tartan.schema.stwr;
 
     function createParser() {
       return schema.parse({
@@ -173,7 +176,7 @@
       canvas.height = canvas.clientHeight;
       rebuild();
     })(
-      document.querySelector('#editor-container textarea'),
+      editor,
       document.querySelector('#editor-container button'),
       document.querySelector('#formatted-container pre'),
       repaint);

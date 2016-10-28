@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 function substrNearOffset(str, offset) {
   var part = '';
   if (offset - 5 < 0) {

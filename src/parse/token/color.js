@@ -44,7 +44,7 @@ function validateOptions(options) {
   // 100% way to extract color value
   if (options.comment != 'none') {
     if (options.semicolonBeforeComment != 'require') {
-      options.allowShortFormat = true;
+      options.allowShortFormat = false;
     }
   }
 

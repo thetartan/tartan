@@ -13,7 +13,9 @@ var defaultOptions = {
   filterTokens: null,
   // Should return `true` if token is a separator between
   // warp and weft sequence
-  isWarpAndWeftSeparator: function(token) { return false; },
+  isWarpAndWeftSeparator: function(token) {
+    return false;
+  },
   failOnMultipleWarpAndWeftSeparators: true,
   // function to transform newly built AST: (sett) => { return modifiedSett; }
   transformSett: null
