@@ -5,6 +5,7 @@ var defaults = require('../../defaults');
 var parse = require('../../parse');
 var filter = require('../../filter');
 var syntax = require('../../syntax');
+var transform = require('../../transform');
 var utils = require('../../utils');
 
 // Options for: tartan.parse() + `transformSett` for `buildSyntaxTree`
@@ -15,7 +16,10 @@ function factory(options) {
     isWarpAndWeftSeparator: function(token) {
       return utils.isLiteral(token) && (token.value == '//');
     },
-    transformSett: options.transformSett
+    transformSett: transform([
+      options.transformSett,
+      transform.checkClassicSyntax()
+    ])
   });
 
   return parse([
@@ -26,12 +30,10 @@ function factory(options) {
       allowLongNames: true,
       valueAssignment: 'allow',
       colorPrefix: 'require',
-      allowShortFormat: true,
+      allowShortFormat: false,
       comment: 'none',
       semicolonAtTheEnd: 'allow'
     })),
-    parse.literal('['),
-    parse.literal(']'),
     parse.literal('//'),
     parse.pivot(_.extend({}, options, {
       allowLongNames: true

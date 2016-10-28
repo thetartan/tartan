@@ -36,10 +36,9 @@ function flatten(tokens, isNested) {
   // But if entire threadcount should be reflected, algorithm a bit differs:
   // R/10 K20 Y10 W/2 should become R10 K20 Y10 W2 Y10 K20 - without last R20.
   // So let's check this case:
-  if (!isNested && (tokens.length == 0) && _.isArray(tokens[0])) {
+  if (!isNested && (tokens.length == 1) && _.isArray(tokens[0])) {
     result.pop();
   }
-
 
   return result;
 }

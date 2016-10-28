@@ -92,6 +92,11 @@ function InvalidColorFormat(token, colorMap) {
   return error;
 }
 
+function ClassicSyntaxError(message) {
+  message = 'Strict syntax: only entire threadcount may be reflected';
+  return new Error(message);
+}
+
 module.exports.NotImplemented = NotImplemented;
 module.exports.CreateTokenError = CreateTokenError;
 module.exports.InvalidToken = InvalidToken;
@@ -100,3 +105,4 @@ module.exports.OrphanedPivot = OrphanedPivot;
 module.exports.UnsupportedToken = UnsupportedToken;
 module.exports.ColorNotFound = ColorNotFound;
 module.exports.InvalidColorFormat = InvalidColorFormat;
+module.exports.ClassicSyntaxError = ClassicSyntaxError;

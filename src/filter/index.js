@@ -8,7 +8,7 @@ function factory(processors) {
   return function(tokens) {
     if (_.isArray(tokens)) {
       for (var i = 0; i < processors.length; i++) {
-        tokens = processors(tokens);
+        tokens = processors[i](tokens);
       }
     }
     return tokens;
