@@ -6,6 +6,14 @@ var utils = require('../../utils');
 
 function factory(options) {
   options = _.extend({}, options);
+  options.formatters = {
+    color: function(token) {
+      return token.name + token.color + ';';
+    },
+    stripe: function(token) {
+      return token.name + token.count;
+    }
+  };
   options.joinComponents = function(formattedSett, originalSett) {
     var threadcount = formattedSett.warp;
     var weft = formattedSett.weft;

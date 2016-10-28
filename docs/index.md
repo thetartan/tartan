@@ -19,5 +19,6 @@ taken from the code. Please understand me.
 - [Tartan](https://en.wikipedia.org/wiki/Tartan) - Wikipedia
 - [Scottish Tartans Authority](https://www.tartanregister.gov.uk/threadcount.aspx), The only organisation dedicated to promoting tartan - registered charity.
 - [The Scottish Register of Tartans](http://www.tartanregister.gov.uk/), Scotland's official tartan register.
+- [The Scottish Tartans World Register](http://www.tartans.scotland.net/world_register.cfm.htm).
 - [Weddlist](http://www.weddslist.com/tartans/links.html) - Links about Tartans 
    

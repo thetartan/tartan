@@ -14,7 +14,10 @@ function factory(options) {
   ]);
   options.formatters = {
     color: function(token) {
-      return token.name + token.color + ';';
+      var color = token.color;
+      color = color.substr(1, color.length).toUpperCase();
+      var comment = _.isString(token.comment) ? token.comment : '';
+      return token.name + '=' + color + comment + ';';
     },
     stripe: function(token) {
       return token.name + token.count;
@@ -36,7 +39,7 @@ function factory(options) {
     var threadcount = formattedSett.warp;
     var weft = formattedSett.weft;
     if ((weft != '') && (weft != formattedSett.warp)) {
-      threadcount += ' // ' + formattedSett.weft;
+      threadcount += ' . ' + formattedSett.weft;
     }
     return utils.trim([formattedSett.colors, threadcount].join('\n'));
   };
