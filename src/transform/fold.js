@@ -26,7 +26,7 @@ function processTokens(tokens) {
     right = tokens[j];
     if (utils.isStripe(left) && (utils.isStripe(right))) {
       var isSameColor = left.name == right.name;
-      var isSameCount = left.count = right.count;
+      var isSameCount = left.count == right.count;
       if (isSameColor && isSameCount) {
         result.push(left);
         if (i == j) {
