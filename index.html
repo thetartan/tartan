@@ -90,11 +90,12 @@
     document.querySelector('#version span').innerHTML = 'v' + tartan.version;
 
     var editor = document.querySelector('#editor-container textarea');
-    editor.value = 'r=ffcacaRED; R/40 Y1 R40 Y5 R15 R5 T4 T6 W15 K4 Y/1';
+    editor.value = 'K#101010 BLACK; B#2c2c80 BLUE; G#006818 GREEN;\n' +
+      'B/24 K4 B4 K4 B4 K20 G24 K6 G24 K20 B22 K4 B/4';
 
     var canvas = document.querySelector('#canvas-container canvas');
 
-    var schema = tartan.schema.stwr;
+    var schema = tartan.schema.classic;
 
     function createParser() {
       return schema.parse({

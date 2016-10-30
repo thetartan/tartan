@@ -31,8 +31,9 @@ function factory(options) {
       valueAssignment: 'allow',
       colorPrefix: 'require',
       allowShortFormat: false,
-      comment: 'none',
-      semicolonAtTheEnd: 'allow'
+      comment: 'allow',
+      semicolonBeforeComment: 'allow',
+      semicolonAtTheEnd: 'require'
     })),
     parse.literal('//'),
     parse.pivot(_.extend({}, options, {
