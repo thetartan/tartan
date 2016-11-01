@@ -30,7 +30,9 @@ console.log(tartan.version);
 
 Since this library is frontend-oriented, some features may be unavailable
 when using it on a back-end (like rendering to HTML canvas). But you can still
-use parser and some renderers (like `tartan.render.format()`).
+use parser and some renderers (like `tartan.render.format()`). Also you can try
+to use [this Canvas library](https://github.com/Automattic/node-canvas) for Node.js
+(I did not check it yet).
 
 ## Examples
  
