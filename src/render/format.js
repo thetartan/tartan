@@ -58,10 +58,16 @@ function getOnlyUsedColors(tokens, colors, result) {
   return result;
 }
 
-function colorsAsTokens(colors, options) {
+function colorsAsTokens(colors, colorComments, options) {
+  colorComments = _.extend({}, colorComments);
   return _.chain(utils.normalizeColorMap(colors))
     .map(function(value, name) {
-      return utils.newTokenColor(name, value);
+      var result = utils.newTokenColor(name, value);
+      var key = name + value;
+      if (colorComments[key]) {
+        result.comment = colorComments[key];
+      }
+      return result;
     })
     .sortBy('name')
     .value();
@@ -122,7 +128,7 @@ function render(sett, options) {
       getOnlyUsedColors(sett.weft, colors)
     );
   }
-  colors = colorsAsTokens(colors, options);
+  colors = colorsAsTokens(colors, sett.colorComments, options);
 
   colors = renderTokens(colors, options);
   warp = renderTokens(warp, options);

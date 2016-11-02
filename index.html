@@ -125,6 +125,15 @@
       });
     }
 
+    function createPaternRenderer() {
+      return tartan.render.pattern({
+        skipUnsupportedTokens: true,
+        skipInvalidColors: true,
+        defaultColors: schema.colors,
+        transformSett: tartan.transform.flatten()
+      });
+    }
+
     function createFormatter() {
       return schema.format({
         outputOnlyUsedColors: true
@@ -140,6 +149,7 @@
     var format = createFormatter();
     var metrics = createMetricsCalculator();
     var offset = getInitialOffset();
+    var renderPattern = createPaternRenderer();
 
     var repaint = tartan.helpers.repaint(function() {
       enableTimers && console.time('render');
@@ -157,6 +167,7 @@
           console.log('Metrics #1:', render.metrics);
           formatted.innerHTML = format(sett);
           console.log('Metrics #2:', metrics(sett));
+          console.log(JSON.stringify(renderPattern(sett).warp));
           offset = getInitialOffset();
         } catch(e) {
           console.log(e);

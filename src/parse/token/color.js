@@ -131,7 +131,7 @@ function parser(str, offset, pattern) {
       type: utils.TokenType.color,
       name: matches[1].toUpperCase(),
       color: utils.normalizeColor('#' + matches[2]),
-      comment: matches[4],
+      comment: utils.trim(matches[4]),
       length: matches[0].length
     };
   }

@@ -16,7 +16,8 @@ function factory(options) {
     color: function(token) {
       var color = token.color;
       color = color.substr(1, color.length).toUpperCase();
-      var comment = _.isString(token.comment) ? token.comment : '';
+      var comment = _.isString(token.comment) && (token.comment.length > 0) ?
+        ' ' + utils.trim(token.comment) : '';
       return token.name + '=' + color + comment + ';';
     },
     stripe: function(token) {

@@ -50,7 +50,7 @@ function splitWarpAndWeft(tokens, options) {
   return result;
 }
 
-function buildTree(tokens, colors, options) {
+function buildTree(tokens, colors, colorComments, options) {
   var result = [];
   var stack = [result];
   var currentBlock;
@@ -60,6 +60,9 @@ function buildTree(tokens, colors, options) {
     switch (token.type) {
       case utils.TokenType.color:
         colors[token.name] = token.color;
+        if (_.isString(token.comment) && (token.comment.length > 0)) {
+          colorComments[token.name + token.color] = token.comment;
+        }
         break;
       case utils.TokenType.stripe:
         currentBlock = _.last(stack);
@@ -111,17 +114,20 @@ function buildSyntaxTree(tokens, options) {
 
   var result = {};
   result.colors = {};
+  result.colorComments = {};
 
   // Internal filters
   tokens.warp = pivotsToSquareBrackets(options)(tokens.warp);
   tokens.warp = matchSquareBrackets()(tokens.warp);
-  result.warp = buildTree(tokens.warp, result.colors, options);
+  result.warp = buildTree(tokens.warp, result.colors,
+    result.colorComments, options);
   if (warpIsSameAsWeft) {
     result.weft = result.warp;
   } else {
     tokens.weft = pivotsToSquareBrackets(options)(tokens.weft);
     tokens.weft = matchSquareBrackets()(tokens.weft);
-    result.weft = buildTree(tokens.weft, result.colors, options);
+    result.weft = buildTree(tokens.weft, result.colors,
+      result.colorComments, options);
   }
 
   if (_.isFunction(options.transformSett)) {
