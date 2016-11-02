@@ -22,13 +22,25 @@ function factory(options) {
     parse.stripe(_.extend({}, options, {
       allowLongNames: true
     })),
+    // Colors in short format: whitespace before comment is required
     parse.color(_.extend({}, options, {
       allowLongNames: true,
       valueAssignment: 'allow',
       colorPrefix: 'require',
-      allowShortFormat: true,
-      comment: 'none',
-      semicolonAtTheEnd: 'allow'
+      colorFormat: 'short',
+      comment: 'allow',
+      whitespaceBeforeComment: 'require',
+      semicolonAtTheEnd: 'require'
+    })),
+    // Long color format
+    parse.color(_.extend({}, options, {
+      allowLongNames: true,
+      valueAssignment: 'allow',
+      colorPrefix: 'require',
+      colorFormat: 'long',
+      comment: 'allow',
+      whitespaceBeforeComment: 'allow',
+      semicolonAtTheEnd: 'require'
     })),
     parse.literal('['),
     parse.literal(']'),

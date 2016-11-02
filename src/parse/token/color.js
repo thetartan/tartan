@@ -10,15 +10,15 @@ var defaultOptions = {
   valueAssignment: 'allow',
   // Use '#' as color prefix: 'none', 'allow', 'require'
   colorPrefix: 'require',
-  // Color can be in short format (#fc0)
-  allowShortFormat: true,
+  // Formats: `short` (#fc0), `long` (#ffcc00) or `both`
+  colorFormat: 'both',
   // Comment after color value: 'none', 'allow', 'require'.
-  // If `comment` != 'none' and `semicolonBeforeComment` != 'require',
-  // `allowShortFormat` is forced to true
+  // If `comment` != 'none' and `whitespaceBeforeComment` != 'require',
+  // `colorFormat` is forced to `long`
   comment: 'none',
-  // Semicolon between value and comment: 'none', 'allow', 'require'.
+  // Whitespace between value and comment: 'none', 'allow', 'require'.
   // Ignored if `comment` options has value 'none'
-  semicolonBeforeComment: 'require',
+  whitespaceBeforeComment: 'require',
   // Semicolon at the end of color definition: 'none', 'allow', 'require'
   semicolonAtTheEnd: 'allow'
 };
@@ -28,23 +28,29 @@ function validateOptions(options) {
     'valueAssignment',
     'colorPrefix',
     'comment',
-    'semicolonBeforeComment',
+    'whitespaceBeforeComment',
     'semicolonAtTheEnd'
   ];
+  var values = ['none', 'allow', 'require'];
   _.each(keys, function(key) {
     var value = utils.trim(('' + options[key]).toLowerCase());
-    if ((value != 'allow') && (value != 'require')) {
-      value = 'none';
+    if (values.indexOf(value) == -1) {
+      value = defaultOptions[key];
     }
     options[key] = value;
   });
 
+  options.colorFormat = utils.trim(('' + options.colorFormat).toLowerCase());
+  if (['long', 'short', 'both'].indexOf(options.colorFormat) == -1) {
+    options.colorFormat = defaultOptions.colorFormat;
+  }
+
   // If comment is allowed and may be not separated from color
-  // by a semicolon, require long color format - since it is the only
+  // by a whitespace, require long color format - since it is the only
   // 100% way to extract color value
   if (options.comment != 'none') {
-    if (options.semicolonBeforeComment != 'require') {
-      options.allowShortFormat = false;
+    if (options.whitespaceBeforeComment != 'require') {
+      options.colorFormat = 'long';
     }
   }
 
@@ -81,30 +87,41 @@ function buildRegExp(options) {
     default: break;
   }
 
-  if (options.allowShortFormat) {
-    result.push('([0-9a-f]{6}|[0-9a-f]{3})');
-  } else {
-    result.push('([0-9a-f]{6})');
+  switch (options.colorFormat) {
+    case 'long':
+      result.push('([0-9a-f]{6})');
+      break;
+    case 'short':
+      result.push('([0-9a-f]{3})');
+      break;
+    case 'both':
+      result.push('([0-9a-f]{6}|[0-9a-f]{3})');
+      break;
+    default:
+      break;
   }
 
   // Comments
+  if (options.comment != 'none') {
+    switch (options.whitespaceBeforeComment) {
+      case 'allow': result.push('\\s?'); break;
+      case 'require': result.push('\\s'); break;
+      default: break;
+    }
 
-  switch (options.comment) {
-    case 'allow':
-      switch (options.semicolonBeforeComment) {
-        case 'allow': result.push('(;?([^;]*?))'); break;
-        case 'require': result.push('(;([^;]*?))'); break;
-        default: break;
-      }
-      break;
-    case 'require':
-      switch (options.semicolonBeforeComment) {
-        case 'allow': result.push('(;?([^;]+?))'); break;
-        case 'require': result.push('(;([^;]+?))'); break;
-        default: break;
-      }
-      break;
-    default: break;
+    part = '';
+    switch (options.semicolonAtTheEnd) {
+      case 'none': part = '[^\\s]'; break;
+      case 'allow': part = '[^;\\s]'; break;
+      case 'require': part = '[^;]'; break;
+      default: break;
+    }
+
+    switch (options.comment) {
+      case 'allow': result.push('(' + part + '*)'); break;
+      case 'require': result.push('(' + part + '+)'); break;
+      default: break;
+    }
   }
 
   // Semicolon at the end
@@ -131,7 +148,7 @@ function parser(str, offset, pattern) {
       type: utils.TokenType.color,
       name: matches[1].toUpperCase(),
       color: utils.normalizeColor('#' + matches[2]),
-      comment: utils.trim(matches[4]),
+      comment: utils.trim(matches[3]),
       length: matches[0].length
     };
   }

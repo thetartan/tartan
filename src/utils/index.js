@@ -13,6 +13,9 @@ var TokenType = {
 };
 
 function trim(str) {
+  if (!_.isString(str)) {
+    return str;
+  }
   return str.replace(/^\s+/i, '').replace(/\s+$/i, '');
 }
 

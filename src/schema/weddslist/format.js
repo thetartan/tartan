@@ -42,8 +42,10 @@ function factory(options) {
       .replace(/\(\s/g, '(').replace(/\s\)/g, ')');
     var weft = '';
     if (formattedSett.weft != formattedSett.warp) {
-      weft = '] ' + formattedSett.weft
-        .replace(/\(\s/g, '(').replace(/\s\)/g, ')');
+      if (formattedSett.weft != '') {
+        weft = '] ' + formattedSett.weft
+          .replace(/\(\s/g, '(').replace(/\s\)/g, ')');
+      }
     }
 
     return utils.trim([formattedSett.colors, warp, weft].join('\n'));

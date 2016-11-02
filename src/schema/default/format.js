@@ -8,7 +8,9 @@ function factory(options) {
   options = _.extend({}, options);
   options.formatters = {
     color: function(token) {
-      return token.name + token.color + ';';
+      var comment = _.isString(token.comment) && (token.comment.length > 0) ?
+        ' ' + utils.trim(token.comment) : '';
+      return token.name + token.color + comment + ';';
     },
     stripe: function(token) {
       return token.name + token.count;

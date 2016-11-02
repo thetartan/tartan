@@ -26,7 +26,7 @@ function factory(options) {
       allowLongNames: true,
       valueAssignment: 'none',
       colorPrefix: 'require',
-      allowShortFormat: false,
+      colorFormat: 'long',
       comment: 'none',
       semicolonAtTheEnd: 'allow'
     })),

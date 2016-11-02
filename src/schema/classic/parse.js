@@ -26,15 +26,15 @@ function factory(options) {
     parse.stripe(_.extend({}, options, {
       allowLongNames: true
     })),
-    parse.color(_.extend({}, options, {
+    parse.color({
       allowLongNames: true,
       valueAssignment: 'allow',
       colorPrefix: 'require',
-      allowShortFormat: false,
+      colorFormat: 'long',
       comment: 'allow',
-      semicolonBeforeComment: 'allow',
+      whitespaceBeforeComment: 'allow',
       semicolonAtTheEnd: 'require'
-    })),
+    }),
     parse.literal('//'),
     parse.pivot(_.extend({}, options, {
       allowLongNames: true
