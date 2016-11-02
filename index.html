@@ -196,9 +196,13 @@
     // Canvas
     (function(canvas, repaint) {
       var drag = null;
-      canvas.addEventListener('mousedown', function(event) {
+      var dragTarget = document.releaseCapture ? canvas : window;
+      dragTarget.addEventListener('mousedown', function(event) {
+        if (event.target !== canvas) {
+          return;
+        }
         event = event || window.event;
-        if (event.button == 0) {
+        if (event.buttons == 1) {
           drag = {
             x: event.offsetX,
             y: event.offsetY
@@ -209,21 +213,27 @@
           }
         }
       });
-      canvas.addEventListener('mousemove', function(event) {
+      dragTarget.addEventListener('mousemove', function(event) {
         event = event || window.event;
         if (drag) {
-          offset.x += event.offsetX - drag.x;
-          offset.y += event.offsetY - drag.y;
+          if (event.buttons != 1) {
+            drag = null;
+          } else {
+            event.preventDefault();
 
-          drag.x = event.offsetX;
-          drag.y = event.offsetY;
+            offset.x += event.offsetX - drag.x;
+            offset.y += event.offsetY - drag.y;
+
+            drag.x = event.offsetX;
+            drag.y = event.offsetY;
+          }
 
           repaint();
         }
       });
-      canvas.addEventListener('mouseup', function(event) {
+      dragTarget.addEventListener('mouseup', function(event) {
         event = event || window.event;
-        if (event.button == 0) {
+        if (event.buttons == 1) {
           drag = null;
           if (document.releaseCapture) {
             // Only IE and FF
