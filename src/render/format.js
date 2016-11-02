@@ -84,8 +84,10 @@ function renderTokens(tokens, options) {
     })
     .filter()
     .join(' ')
+    /* eslint-disable no-useless-escape */
     .replace(/\[\s/ig, '[')
     .replace(/\s\]/ig, ']')
+    /* eslint-enable no-useless-escape */
     .value());
 }
 
