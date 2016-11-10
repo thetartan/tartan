@@ -6,35 +6,64 @@ var parse = require('../../parse');
 var filter = require('../../filter');
 var syntax = require('../../syntax');
 var transform = require('../../transform');
+var utils = require('../../utils');
 
-// Options for: tartan.parse() + `transformSett` for `buildSyntaxTree`
+/*
+ options = {
+   errorHandler: <default>,
+   processTokens: <default>,
+   transformSyntaxTree: <default>
+ }
+ */
+
 function factory(options) {
   options = _.extend({}, options);
-  options.buildSyntaxTree = syntax.weddslist({
-    filterTokens: filter.removeTokens(defaults.insignificantTokens),
-    transformSett: transform([
-      options.transformSett,
-      transform.checkClassicSyntax()
-    ])
-  });
 
   return parse([
-    parse.stripe(_.extend({}, options, {
-      allowLongNames: true
-    })),
-    parse.color(_.extend({}, options, {
-      allowLongNames: true,
-      valueAssignment: 'none',
-      colorPrefix: 'require',
-      colorFormat: 'long',
-      comment: 'none',
-      semicolonAtTheEnd: 'allow'
-    })),
+    parse.stripe(),
+    parse.literal('('),
+    parse.literal(')'),
     parse.literal('['),
     parse.literal(']'),
-    parse.literal('('),
-    parse.literal(')')
-  ], options);
+    parse.color({
+      allowLongNames: true,
+      colorPrefix: /[#]/,
+      colorSuffix: null,
+      colorFormat: 'long',
+      allowComment: false
+    })
+  ], {
+    errorHandler: options.errorHandler,
+    processTokens: filter([
+      options.processTokens,
+      filter.removeTokens(defaults.insignificantTokens)
+    ]),
+    buildSyntaxTree: syntax.weddslist({
+      errorHandler: options.errorHandler,
+      processTokens: filter.classify({
+        // Disable some token classes
+        isWarpAndWeftSeparator: null,
+        isPivot: null,
+        isBlockStart: null,
+        isBlockEnd: null,
+
+        // Add new token classes
+        isWarpStart: function(token) {
+          return utils.token.isLiteral(token) && (token.value == '[');
+        },
+        isWeftStart: function(token) {
+          return utils.token.isLiteral(token) && (token.value == ']');
+        },
+        isBlockBodyStart: function(token) {
+          return utils.token.isLiteral(token) && (token.value == '(');
+        },
+        isBlockBodyEnd: function(token) {
+          return utils.token.isLiteral(token) && (token.value == ')');
+        }
+      }),
+      transformSyntaxTree: options.transformSyntaxTree
+    })
+  });
 }
 
 module.exports = factory;

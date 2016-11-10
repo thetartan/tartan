@@ -6,64 +6,57 @@ var utils = require('../../utils');
 var defaultOptions = {
   // Name can have more than one character
   allowLongNames: true,
-  // Use '=' symbol between name and value: 'none', 'allow', 'require'
-  valueAssignment: 'allow',
-  // Use '#' as color prefix: 'none', 'allow', 'require'
-  colorPrefix: 'require',
+  // Regular expression or string; case-insensitive
+  colorPrefix: /[=]?[#]/,
+  // Regular expression or string; case-insensitive
+  colorSuffix: /;?/,
   // Formats: `short` (#fc0), `long` (#ffcc00) or `both`
   colorFormat: 'both',
-  // Comment after color value: 'none', 'allow', 'require'.
-  // If `comment` != 'none' and `whitespaceBeforeComment` != 'require',
-  // `colorFormat` is forced to `long`
-  comment: 'none',
-  // Whitespace between value and comment: 'none', 'allow', 'require'.
-  // Ignored if `comment` options has value 'none'
-  whitespaceBeforeComment: 'require',
-  // Semicolon at the end of color definition: 'none', 'allow', 'require'
-  semicolonAtTheEnd: 'allow'
+  allowComment: false,
+  // Regular expression or string; case-insensitive
+  commentSuffix: /;/,
+  requireCommentSuffix: true,
+  // Regular expression; value of first group will be used to modify
+  // comment (if available)
+  commentFormat: /^\s*(.*)\s*;\s*$/
 };
 
 function validateOptions(options) {
-  var keys = [
-    'valueAssignment',
-    'colorPrefix',
-    'comment',
-    'whitespaceBeforeComment',
-    'semicolonAtTheEnd'
-  ];
-  var values = ['none', 'allow', 'require'];
-  _.each(keys, function(key) {
-    var value = utils.trim(('' + options[key]).toLowerCase());
-    if (values.indexOf(value) == -1) {
-      value = defaultOptions[key];
-    }
-    options[key] = value;
-  });
-
-  options.colorFormat = utils.trim(('' + options.colorFormat).toLowerCase());
+  options.colorFormat = _.trim(('' + options.colorFormat).toLowerCase());
   if (['long', 'short', 'both'].indexOf(options.colorFormat) == -1) {
     options.colorFormat = defaultOptions.colorFormat;
   }
 
-  // If comment is allowed and may be not separated from color
-  // by a whitespace, require long color format - since it is the only
-  // 100% way to extract color value
-  if (options.comment != 'none') {
-    if (options.whitespaceBeforeComment != 'require') {
-      options.colorFormat = 'long';
-    }
+  if (options.colorPrefix instanceof RegExp) {
+    options.colorPrefix = options.colorPrefix.source;
+  } else
+  if (!_.isString(options.colorPrefix)) {
+    options.colorPrefix = '';
   }
 
-  // If color prefix is 'none', require value assignment
-  if (options.colorPrefix == 'none') {
-    options.valueAssignment = 'require';
+  if (options.colorSuffix instanceof RegExp) {
+    options.colorSuffix = options.colorSuffix.source;
+  } else
+  if (!_.isString(options.colorSuffix)) {
+    options.colorSuffix = '';
+  }
+
+  if (options.commentSuffix instanceof RegExp) {
+    var flags = options.commentSuffix.ignoreCase ? 'i' : '';
+    options.commentSuffix = new RegExp(
+      '^' + options.commentSuffix.source, flags);
+  } else {
+    options.commentSuffix = null;
+  }
+
+  if (!(options.commentFormat instanceof RegExp)) {
+    options.commentFormat = null;
   }
 
   return options;
 }
 
 function buildRegExp(options) {
-  /* eslint-disable max-statements-per-line */
   var result = ['^'];
 
   // Name part
@@ -73,20 +66,8 @@ function buildRegExp(options) {
   }
   result.push('(' + part + ')');
 
-  // Value assignment
-  switch (options.valueAssignment) {
-    case 'allow': result.push('=?'); break;
-    case 'require': result.push('='); break;
-    default: break;
-  }
-
   // Color format
-  switch (options.colorPrefix) {
-    case 'allow': result.push('#?'); break;
-    case 'require': result.push('#'); break;
-    default: break;
-  }
-
+  result.push('(' + options.colorPrefix + ')');
   switch (options.colorFormat) {
     case 'long':
       result.push('([0-9a-f]{6})');
@@ -100,65 +81,91 @@ function buildRegExp(options) {
     default:
       break;
   }
-
-  // Comments
-  if (options.comment != 'none') {
-    switch (options.whitespaceBeforeComment) {
-      case 'allow': result.push('\\s?'); break;
-      case 'require': result.push('\\s'); break;
-      default: break;
-    }
-
-    part = '';
-    switch (options.semicolonAtTheEnd) {
-      case 'none': part = '[^\\s]'; break;
-      case 'allow': part = '[^;\\s]'; break;
-      case 'require': part = '[^;]'; break;
-      default: break;
-    }
-
-    switch (options.comment) {
-      case 'allow': result.push('(' + part + '*)'); break;
-      case 'require': result.push('(' + part + '+)'); break;
-      default: break;
-    }
-  }
-
-  // Semicolon at the end
-  switch (options.semicolonAtTheEnd) {
-    case 'none': break;
-    case 'allow': result.push(';?'); break;
-    case 'require': result.push(';'); break;
-    default: break;
-  }
+  result.push(options.colorSuffix);
 
   return new RegExp(result.join(''), 'i');
-  /* eslint-enable max-statements-per-line */
 }
 
-function parser(str, offset, pattern) {
+function parser(context, offset, pattern, options) {
+  var source = context.source;
   var matches;
+  var chunk;
+  var i;
 
-  // Color definition can have at most 107 characters
-  str = str.substr(offset, 110);
+  chunk = source.substr(offset, 200);
 
-  matches = pattern.exec(str);
+  matches = pattern.exec(chunk);
   if (matches) {
-    return {
-      type: utils.TokenType.color,
+    var result = {
+      type: utils.token.color,
       name: matches[1].toUpperCase(),
-      color: utils.normalizeColor('#' + matches[2]),
-      comment: utils.trim(matches[3]),
+      // matches[2] is color prefix
+      color: utils.color.normalizeColor(matches[3]),
+      comment: '',
       length: matches[0].length
     };
+
+    if (!context.inForesee) {
+      if (options.allowComment) {
+        var commentOffset = offset + result.length;
+        if (options.commentSuffix && options.requireCommentSuffix) {
+          // Fast case - just search for suffix
+          for (i = commentOffset; i < source.length; i++) {
+            chunk = source.substr(i, 10);
+            matches = options.commentSuffix.exec(chunk);
+            if (matches) {
+              result.comment = source.substr(commentOffset,
+                i - commentOffset + matches[0].length);
+              break;
+            }
+          }
+          if (i >= source.length) {
+            result.comment = source.substr(commentOffset, source.length);
+          }
+        } else {
+          var ignoreTokens = ['whitespace', 'invalid'];
+          // Slow - search for next token or suffix (if available)
+          for (i = commentOffset; i < source.length; i++) {
+            chunk = source.substr(i, 10);
+            matches = options.commentSuffix.exec(chunk);
+            if (matches) {
+              result.comment = source.substr(commentOffset,
+                i - commentOffset + matches[0].length);
+              break;
+            }
+            var token = context.foresee(i);
+            if (_.isObject(token) && (ignoreTokens.indexOf(token.type) == -1)) {
+              result.comment = source.substr(commentOffset,
+                i - commentOffset);
+              break;
+            }
+          }
+          if (i >= source.length) {
+            result.comment = source.substr(commentOffset, source.length);
+          }
+        }
+      }
+
+      result.length += result.comment.length;
+
+      if (options.commentFormat) {
+        matches = options.commentFormat.exec(result.comment);
+        if (matches && _.isString(matches[1])) {
+          result.comment = matches[1];
+        }
+      }
+      result.comment = _.trim(result.comment);
+    }
+
+    return result;
   }
 }
 
 function factory(options) {
   options = validateOptions(_.extend({}, defaultOptions, options));
   var pattern = buildRegExp(options);
-  return function(str, offset) {
-    return parser(str, offset, pattern);
+  return function(context, offset) {
+    return parser(context, offset, pattern, options);
   };
 }
 

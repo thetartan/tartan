@@ -6,10 +6,6 @@ var render = require('../../render');
 var transform = require('../../transform');
 var defaults = require('../../defaults');
 
-function formatPivot(str) {
-  return str.replace(/^([a-z]+)([0-9]+)$/i, '$1/$2');
-}
-
 var defaultOptions = {
   format: {
     color: function(item) {
@@ -20,13 +16,8 @@ var defaultOptions = {
       return item.name + item.count;
     },
     block: function(block) {
-      var items = block.formattedItems;
-      if (block.reflect && (items.length >= 2)) {
-        // Convert first and last to pivots
-        items[0] = formatPivot(items[0]);
-        items[items.length - 1] = formatPivot(items[items.length - 1]);
-      }
-      return _.chain(items).join(' ').trim().value();
+      var result = _.chain(block.formattedItems).join(' ').trim().value();
+      return result != '' ? '[' + result + ']' : '';
     }
   }
 };
@@ -44,12 +35,6 @@ function factory(options) {
   if (options.warpAndWeftSeparator == '') {
     options.warpAndWeftSeparator = index.warpAndWeftSeparator;
   }
-
-  options.transformSyntaxTree = transform([
-    options.transformSyntaxTree,
-    transform.flatten(),
-    transform.fold()
-  ]);
 
   options.join = function(components) {
     var parts = [];

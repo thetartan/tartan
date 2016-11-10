@@ -1,28 +1,24 @@
 'use strict';
 
 var _ = require('lodash');
-var lexer = require('./tokenize');
+var tokenize = require('./tokenize');
 
 var defaultOptions = {
-  // function to filter parsed tokens: (tokens) => { return modifiedTokens; }
-  filterTokens: null,
-  // Function to build AST: (tokens) => { return newAST; }
-  buildSyntaxTree: null
+  errorHandler: null,
+  processTokens: null,
+  buildSyntaxTree: null,
+  foreseeLimit: 1
 };
 
 function factory(parsers, options) {
-  var tokenize = lexer(parsers, options);
   options = _.extend({}, defaultOptions, options);
+
   return function(source) {
-    if (!_.isString(source)) {
-      return null;
+    var context = tokenize(source, parsers, options);
+    var result = context.parse();
+    if (_.isFunction(options.processTokens)) {
+      result = options.processTokens(result);
     }
-    var result = tokenize(source);
-
-    if (_.isFunction(options.filterTokens)) {
-      result = options.filterTokens(result);
-    }
-
     if (_.isFunction(options.buildSyntaxTree)) {
       result = options.buildSyntaxTree(result);
     }

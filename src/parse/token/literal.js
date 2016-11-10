@@ -8,13 +8,14 @@ var defaultOptions = {
   ignoreCase: false
 };
 
-function parser(str, offset, options) {
+function parser(context, offset, options) {
+  var source = context.source;
   if (options.string != '') {
-    var s = str.substr(offset, options.string.length);
+    var s = source.substr(offset, options.string.length);
     var q = options.ignoreCase ? s.toUpperCase() : s;
     if (q == options.string) {
       return {
-        type: utils.TokenType.literal,
+        type: utils.token.literal,
         value: s,
         length: s.length
       };

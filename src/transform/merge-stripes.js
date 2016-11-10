@@ -1,72 +1,59 @@
 'use strict';
 
 var _ = require('lodash');
-var utils = require('../utils');
 
-// Do not merge first and last stripe in the only nested block in a root
-// as they are pivots! For other nested blocks, first pivot can be merged.
+// Do not merge last stripe in reflected blocks as it is central pivot.
+// Do not merge first stripe in blocks if it is reflected and repeated.
 // Example: [R20 R10 R5 Y2 K10 K5]
 // Wrong: [R35 Y2 K15] => R35 Y2 K15 Y2
 // Right: [R20 R15 Y2 K10 K5]
 //        => R20 R15 Y2 K10 K5 K10 Y2 R15
 //        => R35 Y2 K25 Y2 R15
-function processTokens(tokens, isNested, doNotMergeFirstPivot) {
-  var result = [];
+function processTokens(block) {
+  // Root is always repetitive
+  var first = block.reflect && (block.isRoot || (block.repeat > 1)) ?
+    _.first(block.items) : null;
+  var last = block.reflect ? _.last(block.items) : null;
 
-  // Special case
-  if (!isNested && (tokens.length == 1) && (_.isArray(tokens[0]))) {
-    result.push(processTokens(tokens[0], true, true));
-    return result;
-  }
-
-  var token;
-  var prev;
-  var correctionStart = doNotMergeFirstPivot ? 1 : 0;
-  var correctionEnd = isNested ? 1 : 0;
-
-  for (var i = correctionStart; i < tokens.length - correctionEnd; i++) {
-    token = tokens[i];
-    if (_.isArray(token)) {
-      result.push(processTokens(token, true));
-      continue;
+  block = _.clone(block);
+  block.items = _.reduce(block.items, function(accumulator, item) {
+    // Process nested blocks
+    if (item.isBlock) {
+      accumulator.push(processTokens(item));
+      return accumulator;
     }
-    if (utils.isStripe(token)) {
-      prev = _.last(result);
-      // If current stripe is the same as previous - merge them
-      if (utils.isStripe(prev) && (prev.name == token.name)) {
-        prev = _.clone(result.pop());
-        prev.count += token.count;
-        result.push(prev);
-        continue;
+    if (item.isStripe) {
+      // Check last item
+      if (item === last) {
+        accumulator.push(item);
+        return accumulator;
+      }
+      var prev = _.last(accumulator);
+      // Check first item
+      if (prev && prev.isStripe && (prev !== first)) {
+        if (prev.name == item.name) {
+          prev = _.clone(accumulator.pop());
+          prev.count += item.count;
+          accumulator.push(prev);
+          return accumulator;
+        }
       }
     }
-    result.push(token);
-  }
+    accumulator.push(item);
+    return accumulator;
+  }, []);
 
-  // For nested blocks, keep first (depending on doNotMergeFirstPivot)
-  // and last stripe
-  if (isNested) {
-    token = _.first(tokens);
-    if (token && doNotMergeFirstPivot) {
-      result.splice(0, 0, token);
-    }
-    token = _.last(tokens);
-    if (token && (tokens.length > 1)) {
-      result.push(token);
-    }
-  }
-
-  return result;
+  return block;
 }
 
 function transform(sett, options) {
   var result = _.clone(sett);
 
   var warpIsSameAsWeft = sett.warp === sett.weft;
-  if (_.isArray(sett.warp)) {
+  if (_.isObject(sett.warp)) {
     result.warp = processTokens(sett.warp, options);
   }
-  if (_.isArray(sett.weft)) {
+  if (_.isObject(sett.weft)) {
     if (warpIsSameAsWeft) {
       result.weft = result.warp;
     } else {

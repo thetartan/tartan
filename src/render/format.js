@@ -1,146 +1,108 @@
 'use strict';
 
 var _ = require('lodash');
-var utils = require('../utils');
 
 var defaultOptions = {
   // function to transform newly built AST: (sett) => { return modifiedSett; }
-  transformSett: null,
-  formatters: {
-    color: function(token) {
-      return token.name + token.color + ';';
+  transformSyntaxTree: null,
+  format: {
+    color: function(item) {
+      var comment = item.comment != '' ? ' ' + item.comment : '';
+      return item.name + item.value + comment + ';';
     },
-    stripe: function(token) {
-      return token.name + token.count;
+    stripe: function(item) {
+      return item.name + item.count;
     },
-    pivot: function(token) {
-      return token.name + '/' + token.count;
+    block: function(block) {
+      var result = _.chain(block.formattedItems).join(' ').trim().value();
+      return result != '' ? '[' + result + ']' : '';
     }
   },
-  defaultFormatter: function(token) {
-    return token.value;
-  },
-  prepareNestedBlock: function(nestedBlock) {
-    var result = [];
-    result.push(utils.newTokenOpeningSquareBracket());
-    result = result.concat(nestedBlock);
-    result.push(utils.newTokenClosingSquareBracket());
-    return result;
-  },
-  prepareRootBlock: function(block) {
-    return block;
-  },
-  joinComponents: function(formattedSett, originalSett) {
-    return utils.trim([
-      formattedSett.colors,
-      formattedSett.warp,
-      formattedSett.weft
-    ].join('\n'));
+  join: function(components) {
+    var parts = [];
+    if (components.colors.length > 0) {
+      parts.push(components.colors.join(' '));
+    }
+    if (components.warp != components.weft) {
+      parts.push(components.warp + ' // ' + components.weft);
+    } else {
+      parts.push(components.warp);
+    }
+    return parts.join('\n');
   },
   defaultColors: {},
-  outputOnlyUsedColors: false
+  includeUnusedColors: true,
+  includeDefaultColors: true
 };
 
-function getOnlyUsedColors(tokens, colors, result) {
-  if (!_.isObject(result)) {
-    result = {};
+function processColors(usedColors, settColors, options) {
+  var defaultColors = _.extend({}, options.defaultColors);
+  var keys = _.intersection(_.keys(settColors), _.keys(usedColors));
+  if (options.includeUnusedColors) {
+    keys = _.keys(settColors);
   }
-  _.each(tokens, function(token) {
-    if (_.isArray(token)) {
-      result = getOnlyUsedColors(token, colors, result);
-    }
-    if (utils.isStripe(token) || utils.isPivot(token)) {
-      if (colors[token.name]) {
-        result[token.name] = colors[token.name];
-      }
-    }
-  });
-  return result;
-}
+  if (options.includeDefaultColors) {
+    keys = _.union(_.keys(settColors), _.keys(usedColors));
+  }
 
-function colorsAsTokens(colors, colorComments, options) {
-  colorComments = _.extend({}, colorComments);
-  return _.chain(utils.normalizeColorMap(colors))
-    .map(function(value, name) {
-      var result = utils.newTokenColor(name, value);
-      var key = name + value;
-      if (colorComments[key]) {
-        result.comment = colorComments[key];
+  var format = options.format;
+  if (!_.isFunction(format.color)) {
+    return [];
+  }
+
+  return _.chain(keys)
+    .sortBy()
+    .map(function(key) {
+      var color = settColors[key] || defaultColors[key];
+      if (color) {
+        return format.color(_.extend({name: key}, color));
       }
-      return result;
+      return null;
     })
-    .sortBy('name')
+    .filter(function(str) {
+      return _.isString(str) && (str.length > 0);
+    })
     .value();
 }
 
-function renderTokens(tokens, options) {
-  return utils.trim(_.chain(tokens)
-    .map(function(token) {
-      var formatter = options.formatters[token.type];
-      if (!_.isFunction(formatter)) {
-        formatter = options.defaultFormatter;
+function process(block, options, usedColors) {
+  var format = options.format;
+  if (!_.isFunction(format.stripe) || !_.isFunction(format.block)) {
+    return '';
+  }
+
+  block = _.clone(block);
+  block.formattedItems = _.chain(block.items)
+    .map(function(item) {
+      if (item.isStripe) {
+        usedColors[item.name] = true;
+        return format.stripe(item);
       }
-      return formatter(token);
+      if (item.isBlock) {
+        return process(item, options, usedColors);
+      }
+      return '';
     })
-    .filter()
-    .join(' ')
-    /* eslint-disable no-useless-escape */
-    .replace(/\[\s/ig, '[')
-    .replace(/\s\]/ig, ']')
-    /* eslint-enable no-useless-escape */
-    .value());
-}
-
-function flattenTokens(tokens, options, isNested) {
-  var result = [];
-  var current;
-
-  if (!isNested) {
-    tokens = options.prepareRootBlock(tokens);
-  }
-
-  for (var i = 0; i < tokens.length; i++) {
-    current = tokens[i];
-    if (_.isArray(current)) {
-      // Flatten nested block
-      current = options.prepareNestedBlock(current);
-      current = flattenTokens(current, options, true);
-      [].push.apply(result, current);
-    } else {
-      result.push(current);
-    }
-  }
-
-  return result;
+    .filter(function(str) {
+      return str.length > 0;
+    })
+    .value();
+  return _.isFunction(format.block) ? format.block(block) : '';
 }
 
 function render(sett, options) {
   var warpIsSameAsWeft = sett.warp === sett.weft;
 
-  var warp = flattenTokens(sett.warp, options);
+  var usedColors = {};
+  var warp = process(sett.warp, options, usedColors);
   var weft = warp;
   if (!warpIsSameAsWeft) {
-    weft = flattenTokens(sett.weft, options);
+    weft = process(sett.weft, options, usedColors);
   }
 
-  var colors = _.extend({}, options.defaultColors, sett.colors);
-  if (options.outputOnlyUsedColors) {
-    colors = _.extend({},
-      getOnlyUsedColors(sett.warp, colors),
-      getOnlyUsedColors(sett.weft, colors)
-    );
-  }
-  colors = colorsAsTokens(colors, sett.colorComments, options);
+  var colors = processColors(usedColors, sett.colors, options);
 
-  colors = renderTokens(colors, options);
-  warp = renderTokens(warp, options);
-  weft = renderTokens(weft, options);
-
-  if (weft == warp) {
-    weft = '';
-  }
-
-  return utils.trim(options.joinComponents({
+  return _.trim(options.join({
     colors: colors,
     warp: warp,
     weft: weft
@@ -149,35 +111,13 @@ function render(sett, options) {
 
 function factory(options) {
   options = _.merge({}, defaultOptions, options);
-  if (!_.isFunction(options.defaultFormatter)) {
-    options.defaultFormatter = defaultOptions.defaultFormatter;
-  }
-  if (!_.isFunction(options.joinComponents)) {
-    options.joinComponents = defaultOptions.joinComponents;
-  }
-  if (!_.isFunction(options.prepareNestedBlock)) {
-    options.prepareNestedBlock = defaultOptions.prepareNestedBlock;
-  }
-  if (!_.isFunction(options.prepareRootBlock)) {
-    options.prepareRootBlock = defaultOptions.prepareRootBlock;
-  }
-  if (!_.isObject(options.formatters)) {
-    options.formatters = {};
-  }
-  options.formatters = _.chain(options.formatters)
-    .map(function(value, key) {
-      return _.isFunction(value) ? [key, value] : null;
-    })
-    .filter()
-    .fromPairs()
-    .value();
 
   return function(sett) {
     if (!_.isObject(sett)) {
       return '';
     }
-    if (_.isFunction(options.transformSett)) {
-      sett = options.transformSett(sett);
+    if (_.isFunction(options.transformSyntaxTree)) {
+      sett = options.transformSyntaxTree(sett);
     }
 
     return render(sett, options);

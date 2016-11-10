@@ -17,7 +17,5 @@ function factory(processors) {
 
 module.exports = factory;
 
-module.exports.matchSquareBrackets = require('./match-square-brackets');
-module.exports.pivotsToSquareBrackets = require('./pivots-to-square-brackets');
+module.exports.classify = require('./classify');
 module.exports.removeTokens = require('./remove-tokens');
-module.exports.removeZeroWidthStripes = require('./remove-zero-width-stripes');

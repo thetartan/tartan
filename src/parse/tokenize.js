@@ -1,58 +1,102 @@
 'use strict';
 
 var _ = require('lodash');
-var utils = require('../utils');
 var whitespace = require('./token/whitespace');
 var invalid = require('./token/invalid');
 
-function canBeMerged(token) {
-  return utils.isInvalid(token) || utils.isWhitespace(token);
-}
+function Context(source, parsers, options) {
+  this.source = _.isString(source) ? source : '';
 
-function appendToken(tokens, token) {
-  if (canBeMerged(token)) {
-    var last = _.last(tokens);
-    if (last && canBeMerged(last)) {
-      if (last.type == token.type) {
-        last.value += token.value;
-        last.length += token.length;
-        return;
-      }
-    }
+  parsers = _.filter(parsers, _.isFunction);
+  parsers.splice(0, 0, whitespace()); // Prepend this parser to skip spaces
+  parsers.push(invalid()); // This parser will handle invalid tokens
+  this.parsers = parsers;
+  this.options = options;
+
+  this.inForesee = 0;
+
+  if (_.isFunction(options.errorHandler)) {
+    this.errorHandler = function(error, data, severity) {
+      options.errorHandler(error, data, severity || 'error');
+    };
   }
-  tokens.push(token);
 }
 
-function executeParsers(source, parsers, offset, result) {
-  _.each(parsers, function(parser) {
-    var token = parser(source, offset);
-    if (_.isObject(token)) {
-      token.offset = token.offset || offset;
-      token.source = source;
-      appendToken(result, token);
-      offset = token.offset + token.length;
-      return false;
+Context.prototype = {};
+
+Context.prototype.errorHandler = function(error, data, severity) {
+  // Do nothing - default error handler will just ignore all errors.
+};
+
+function getToken(context, offset) {
+  var result = null;
+
+  _.each(context.parsers, function(parser) {
+    result = parser(context, offset);
+    if (_.isObject(result)) {
+      result.offset = result.offset || offset;
+      return false; // Break
     }
   });
 
-  return offset;
+  return result;
 }
 
-function factory(parsers, options) {
-  parsers = _.filter(parsers, _.isFunction);
-  parsers.splice(0, 0, whitespace()); // Prepend this parser to skip spaces
-  parsers.push(invalid(options)); // This parser will handle invalid tokens
+Context.prototype.foresee = function(offset) {
+  var foreseeLimit = this.options.foreseeLimit;
+  if (this.inForesee >= foreseeLimit) {
+    return null;
+  }
 
-  return function(source) {
-    var tokens = [];
-    var offset = 0;
+  offset = parseInt(offset, 10) || 0;
+  if (offset < 0) {
+    offset = 0;
+  }
 
-    while (offset < source.length) {
-      offset = executeParsers(source, parsers, offset, tokens);
+  if (offset <= this.offset) {
+    this.errorHandler(new Error('Parser should not go back.'), {
+      currentOffset: this.offset,
+      requestedOffset: offset,
+      source: this.source
+    });
+    return null;
+  }
+
+  this.inForesee++;
+  var result = getToken(this, offset);
+  if (this.inForesee > 0) {
+    this.inForesee--;
+  }
+  return result;
+};
+
+Context.prototype.parse = function(offset) {
+  var result = [];
+
+  offset = parseInt(offset, 10) || 0;
+  if (offset < 0) {
+    offset = 0;
+  }
+
+  while (offset < this.source.length) {
+    this.offset = offset;
+    var token = getToken(this, offset);
+    if (_.isObject(token)) {
+      result.push(token);
+      offset = token.offset + token.length;
     }
+  }
 
-    return tokens;
-  };
+  return result;
+};
+
+function factory(source, parsers, options) {
+  options = _.extend({}, options);
+  options.foreseeLimit = parseInt(options.foreseeLimit, 10) || 0;
+  if (options.foreseeLimit < 1) {
+    options.foreseeLimit = 1;
+  }
+  return new Context(source, parsers, options);
 }
 
 module.exports = factory;

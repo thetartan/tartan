@@ -2,10 +2,8 @@
 
 var _ = require('lodash');
 var utils = require('../../utils');
-var errors = require('../../errors');
 
 var defaultOptions = {
-  allowZeroWidthStripes: false,
   // Name can have more than one character
   allowLongNames: true
 };
@@ -26,23 +24,32 @@ function buildRegExp(options) {
   return new RegExp(result.join(''), 'i');
 }
 
-function parser(str, offset, pattern, options) {
-  // Hope nobody will try to add stripe with 1e9 lines...
-  var matches = pattern.exec(str.substr(offset, 10));
+function parser(context, offset, pattern, options) {
+  var source = context.source;
+
+  // Hope nobody will try to add stripe with 1e19 lines...
+  var matches = pattern.exec(source.substr(offset, 20));
   if (matches) {
     var count = parseInt(matches[2], 10) || 0;
-    if (count <= 0) {
-      if (!options.allowZeroWidthStripes) {
-        throw new errors.ZeroWidthStripe(str, offset, matches[0].length);
-      }
+    if (count < 0) {
       count = 0;
     }
-    return {
-      type: utils.TokenType.stripe,
+    var result = {
+      type: utils.token.stripe,
       name: matches[1].toUpperCase(),
       count: count,
       length: matches[0].length
     };
+
+    if (result.count == 0) {
+      context.errorHandler(
+        new Error(utils.error.message.zeroWidthStripe),
+        {token: result},
+        utils.error.severity.warning
+      );
+    }
+
+    return result;
   }
 }
 

@@ -1,4 +1,5 @@
 'use strict';
 
-module.exports.default = require('./default');
+module.exports.extended = require('./extended');
+module.exports.classic = require('./classic');
 module.exports.weddslist = require('./weddslist');

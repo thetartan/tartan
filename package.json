@@ -1,7 +1,7 @@
 {
   "name": "tartan",
-  "version": "3.4.0",
-  "description": "Library to render tartan pattern using its textual descriptor (threadcount).",
+  "version": "4.0.0",
+  "description": "This library allows to parse tartan threadcount.",
   "keywords": [
     "tartan",
     "scotland",
@@ -27,11 +27,11 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kravets-levko/tartan/issues"
+    "url": "https://github.com/thetartan/tartan/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kravets-levko/tartan.git"
+    "url": "https://github.com/thetartan/tartan.git"
   },
   "dependencies": {
     "lodash": "^4.16.4"

@@ -77,7 +77,7 @@
   </div>
 
   <div class="section-wrapper">
-    <a href="https://github.com/kravets-levko/tartan/"
+    <a href="https://github.com/thetartan/tartan/"
       target="_blank">View repository on GitHub</a>
   </div>
 
@@ -95,15 +95,16 @@
 
     var canvas = document.querySelector('#canvas-container canvas');
 
-    var schema = tartan.schema.classic;
+    var schema = tartan.schema.extended;
+
+    function errorHandler(error, data, severity) {
+      console.log(error, data, severity);
+    }
 
     function createParser() {
       return schema.parse({
-        failOnInvalidTokens: false,
-        allowZeroWidthStripes: true,
-        transformSett: tartan.transform.optimize({
-          keepZeroWidthPivots: true
-        })
+        errorHandler: errorHandler,
+        transformSyntaxTree: tartan.transform.optimize()
       });
     }
 
@@ -113,30 +114,15 @@
         skipUnsupportedTokens: true,
         skipInvalidColors: true,
         defaultColors: schema.colors,
-        transformSett: tartan.transform.flatten()
-      });
-    }
-
-    function createMetricsCalculator() {
-      return tartan.render.metrics({
-        skipUnsupportedTokens: true,
-        skipInvalidColors: true,
-        transformSett: tartan.transform.flatten()
-      });
-    }
-
-    function createPaternRenderer() {
-      return tartan.render.pattern({
-        skipUnsupportedTokens: true,
-        skipInvalidColors: true,
-        defaultColors: schema.colors,
-        transformSett: tartan.transform.flatten()
+        transformSyntaxTree: tartan.transform.flatten()
       });
     }
 
     function createFormatter() {
       return schema.format({
-        outputOnlyUsedColors: true
+        defaultColors: schema.colors,
+        includeUnusedColors: false,
+        includeDefaultColors: true
       });
     }
 
@@ -147,11 +133,9 @@
     var parse = createParser();
     var render = createCanvasRenderer(null);
     var format = createFormatter();
-    var metrics = createMetricsCalculator();
     var offset = getInitialOffset();
-    var renderPattern = createPaternRenderer();
 
-    var repaint = tartan.helpers.repaint(function() {
+    var repaint = tartan.utils.repaint(function() {
       enableTimers && console.time('render');
       offset = render(canvas, offset);
       enableTimers && console.timeEnd('render');
@@ -160,24 +144,17 @@
     // Editor
     (function(editor, button, formatted, repaint) {
       function rebuild() {
+        repaint(); // Schedule repaint
+
         enableTimers && console.time('parse');
-        try {
-          var sett = parse(editor.value);
-          render = createCanvasRenderer(sett);
-          console.log('Metrics #1:', render.metrics);
-          formatted.innerHTML = format(sett);
-          console.log('Metrics #2:', metrics(sett));
-          //console.log(JSON.stringify(renderPattern(sett).warp));
-          offset = getInitialOffset();
-        } catch(e) {
-          console.log(e);
-          if (e.data) {
-            console.dir(e.data);
-          }
-          return;
-        }
+        var sett = parse(editor.value);
         enableTimers && console.timeEnd('parse');
-        repaint();
+
+        render = createCanvasRenderer(sett);
+        console.log('Metrics:', render.metrics);
+        offset = getInitialOffset();
+
+        formatted.innerHTML = format(sett);
       }
 
       // Bind event listeners
@@ -204,8 +181,8 @@
         event = event || window.event;
         if (event.buttons == 1) {
           drag = {
-            x: event.offsetX,
-            y: event.offsetY
+            x: event.clientX,
+            y: event.clientY
           };
           if (event.target && event.target.setCapture) {
             // Only IE and FF
@@ -221,11 +198,11 @@
           } else {
             event.preventDefault();
 
-            offset.x += event.offsetX - drag.x;
-            offset.y += event.offsetY - drag.y;
+            offset.x += event.clientX - drag.x;
+            offset.y += event.clientY - drag.y;
 
-            drag.x = event.offsetX;
-            drag.y = event.offsetY;
+            drag.x = event.clientX;
+            drag.y = event.clientY;
           }
 
           repaint();

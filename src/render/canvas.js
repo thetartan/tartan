@@ -2,11 +2,12 @@
 
 var _ = require('lodash');
 var defaults = require('../defaults');
-var rendering = require('./index');
+var utils = require('../utils');
 
 var defaultOptions = {
-  // Also options for `pattern` renderer
-  weave: defaults.weave.serge
+  weave: defaults.weave.serge,
+  defaultColors: null,
+  transformSyntaxTree: null
 };
 
 function clearCanvas(context, options) {
@@ -113,25 +114,15 @@ function prepareWeave(weave, defaultWeave) {
   return _.isArray(weave) && weave.length == 2 ? weave : defaultWeave;
 }
 
-function preparePattern(pattern, weave) {
-  pattern = _.filter(pattern, function(item) {
-    return _.isArray(item) && (item.length >= 2) && (item[1] > 0);
-  });
-
-  var lengthOfPattern = _.reduce(pattern, function(result, item) {
-    return result + item[1];
-  }, 0);
-
-  var weaveLength = _.sum(weave);
-  var lengthOfCycle = lengthOfPattern;
-  while (lengthOfCycle % weaveLength != 0) {
-    lengthOfCycle += lengthOfPattern;
-  }
+function preparePattern(node, weave, colors, defaultColors) {
+  var items = _.isObject(node) && node.isBlock ? node.items : [];
+  var pattern = utils.sett.compile(items, colors, defaultColors);
+  var metrics = utils.sett.getPatternMetrics(pattern, weave);
 
   return {
     pattern: pattern,
-    lengthOfPattern: lengthOfPattern,
-    lengthOfCycle: lengthOfCycle
+    lengthOfPattern: metrics.length,
+    lengthOfCycle: metrics.fullCycle
   };
 }
 
@@ -162,10 +153,6 @@ function prepareOffset(offset, warp, weft) {
   };
 }
 
-function chooseFirstArray() {
-  return _.find(arguments, _.isArray) || [];
-}
-
 function getMetrics(weave, preparedWarp, preparedWeft) {
   return {
     weave: weave,
@@ -194,16 +181,22 @@ function factory(sett, options) {
   if (!_.isObject(sett)) {
     return renderEmpty;
   }
-  sett = rendering.pattern(options)(sett);
-  var warpIsSameAsWeft = sett.weft === sett.warp;
 
   options = _.extend({}, defaultOptions, options);
+  if (_.isFunction(options.transformSyntaxTree)) {
+    sett = options.transformSyntaxTree(sett);
+  }
+
+  var warpIsSameAsWeft = sett.weft === sett.warp;
+
   var weave = prepareWeave(options.weave, defaults.weave.serge);
 
-  var warp = preparePattern(chooseFirstArray(sett.warp, sett.weft), weave);
+  var warp = preparePattern(sett.warp || sett.weft, weave,
+    sett.colors, options.defaultColors);
   var weft = warp;
   if (!warpIsSameAsWeft) {
-    weft = preparePattern(chooseFirstArray(sett.weft, sett.warp), weave);
+    weft = preparePattern(sett.weft || sett.warp, weave,
+      sett.colors, options.defaultColors);
   }
 
   if ((warp.length == 0) && (weft.length == 0)) {

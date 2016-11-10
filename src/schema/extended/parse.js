@@ -11,7 +11,7 @@ var utils = require('../../utils');
 
 /*
   options = {
-    warpAndWeftSeparator: index.warpAndWeftSeparator
+    warpAndWeftSeparator: index.warpAndWeftSeparator,
     errorHandler: <default>,
     processTokens: <default>,
     transformSyntaxTree: <default>
@@ -31,15 +31,17 @@ function factory(options) {
   return parse([
     parse.pivot(),
     parse.stripe(),
+    parse.literal('['),
+    parse.literal(']'),
     parse.literal(options.warpAndWeftSeparator),
     parse.color({
       allowLongNames: true,
-      colorPrefix: /[=][#]?/,
+      colorPrefix: /[=]?[#]/,
       colorSuffix: null,
-      colorFormat: 'long',
+      colorFormat: 'both',
       allowComment: true,
       commentSuffix: /;/,
-      requireCommentSuffix: true,
+      requireCommentSuffix: false,
       commentFormat: /^\s*(.*)\s*;\s*$/
     })
   ], {
@@ -48,7 +50,7 @@ function factory(options) {
       options.processTokens,
       filter.removeTokens(defaults.insignificantTokens)
     ]),
-    buildSyntaxTree: syntax.classic({
+    buildSyntaxTree: syntax.extended({
       errorHandler: options.errorHandler,
       processTokens: filter.classify({
         isWarpAndWeftSeparator: function(token) {

@@ -7,9 +7,9 @@ function factory(processors) {
 
   return function(sett) {
     if (_.isObject(sett)) {
-      for (var i = 0; i < processors.length; i++) {
-        sett = processors[i](sett);
-      }
+      _.each(processors, function(processor) {
+        sett = processor(sett);
+      });
     }
     return sett;
   };
@@ -17,8 +17,10 @@ function factory(processors) {
 
 module.exports = factory;
 
-module.exports.checkClassicSyntax = require('./check-classic-syntax');
 module.exports.flatten = require('./flatten');
+module.exports.flattenSimpleBlocks = require('./flatten-simple-blocks');
 module.exports.fold = require('./fold');
 module.exports.mergeStripes = require('./merge-stripes');
+module.exports.removeEmptyBlocks = require('./remove-empty-blocks');
+module.exports.removeZeroWidthStripes = require('./remove-zero-width-stripes');
 module.exports.optimize = require('./optimize');

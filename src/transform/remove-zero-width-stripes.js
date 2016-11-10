@@ -1,51 +1,68 @@
 'use strict';
 
 var _ = require('lodash');
-var utils = require('../utils');
+
+// TODO: Last zero-width stripe in block can be removed...
+// ... with modifying previous stripe:
+// [R10 K4 W0] => R10 K4 W0 K4 R10 => R10 K8 R10
+// [R10 K8]              =>           R10 K8 R10
 
 var defaultOptions = {
   keepZeroWidthPivots: true
 };
 
-function removeZeroWidthStripes(tokens, options, isNested) {
-  var result = [];
-  var token;
-  var first = _.first(tokens);
-  var last = _.last(tokens);
-  for (var i = 0; i < tokens.length; i++) {
-    token = tokens[i];
-    // Recursive processing of nested blocks
-    if (_.isArray(token)) {
-      result.push(removeZeroWidthStripes(token, options, true));
-    } else
-    // Check stripes
-    if (utils.isStripe(token)) {
-      if (token.count > 0) {
-        result.push(token);
-      } else {
+// Do not remove last stripe in reflected blocks as it is central pivot.
+// Do not remove first stripe in blocks if it is reflected and repeated.
+// Example: [R0 B10 Y2 K5]
+// Wrong: [B10 Y2 K5] => B10 Y2 K5 Y2
+// Right: [R0 B10 Y2 K5]
+//        => R0 B10 Y2 K5 Y2 B10
+//        => B10 Y2 K5 Y2 B10
+function removeZeroWidthStripes(block, options) {
+  // Root is always repetitive
+  var first = block.reflect && (block.isRoot || (block.repeat > 1)) ?
+    _.first(block.items) : null;
+  var last = block.reflect ? _.last(block.items) : null;
+
+  block = _.clone(block);
+  block.items = _.chain(block.items)
+    .map(function(item) {
+      // Recursive processing of nested blocks
+      if (item.isBlock) {
+        item = removeZeroWidthStripes(item, options);
+        return item.items.length > 0 ? item : null;
+      } else
+      // Check stripes
+      if (item.isStripe) {
+        if (item.count > 0) {
+          return item;
+        }
         if (options.keepZeroWidthPivots) {
-          // For nested blocks, keep first and last stripe as they are pivots
-          if (isNested && ((token === first) || (token === last))) {
-            result.push(token);
+          // Keep first and last stripes as they are pivots
+          if ((item === first) || (item === last)) {
+            return item;
           }
         }
+      } else {
+        // Keep everything else
+        return item;
       }
-    } else {
-      // Keep everything else
-      result.push(token);
-    }
-  }
-  return result;
+      return null;
+    })
+    .filter()
+    .value();
+
+  return block;
 }
 
 function transform(sett, options) {
   var result = _.clone(sett);
   var warpIsSameAsWeft = sett.warp == sett.weft;
 
-  if (_.isArray(sett.warp)) {
+  if (_.isObject(sett.warp)) {
     result.warp = removeZeroWidthStripes(sett.warp, options);
   }
-  if (_.isArray(sett.weft)) {
+  if (_.isObject(sett.weft)) {
     if (warpIsSameAsWeft) {
       result.weft = result.warp;
     } else {

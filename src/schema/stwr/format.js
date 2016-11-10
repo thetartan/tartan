@@ -1,52 +1,70 @@
 'use strict';
 
 var _ = require('lodash');
+var index = require('./index');
 var render = require('../../render');
 var transform = require('../../transform');
-var utils = require('../../utils');
+var defaults = require('../../defaults');
 
+function formatPivot(str) {
+  return str.replace(/^([a-z]+)([0-9]+)$/i, '$1/$2');
+}
+
+var defaultOptions = {
+  format: {
+    color: function(item) {
+      var comment = item.comment != '' ? ' ' + item.comment : '';
+      return item.name + '=' + item.value + comment + ';';
+    },
+    stripe: function(item) {
+      return item.name + item.count;
+    },
+    block: function(block) {
+      var items = block.formattedItems;
+      if (block.reflect && (items.length >= 2)) {
+        // Convert first and last to pivots
+        items[0] = formatPivot(items[0]);
+        items[items.length - 1] = formatPivot(items[items.length - 1]);
+      }
+      return _.chain(items).join(' ').trim().value();
+    }
+  }
+};
+
+// Options same as for tartan.render.format():
+// + warpAndWeftSeparator: index.warpAndWeftSeparator
+// - format
+// - join
 function factory(options) {
-  options = _.extend({}, options);
-  options.transformSett = transform([
-    options.transformSett,
-    transform.flatten(options),
+  options = _.extend({}, options, defaultOptions);
+
+  if (!_.isString(options.warpAndWeftSeparator)) {
+    options.warpAndWeftSeparator = '';
+  }
+  if (options.warpAndWeftSeparator == '') {
+    options.warpAndWeftSeparator = index.warpAndWeftSeparator;
+  }
+
+  options.transformSyntaxTree = transform([
+    options.transformSyntaxTree,
+    transform.flatten(),
     transform.fold()
   ]);
-  options.formatters = {
-    color: function(token) {
-      var color = token.color;
-      color = color.substr(1, color.length).toUpperCase();
-      var comment = _.isString(token.comment) && (token.comment.length > 0) ?
-        ' ' + utils.trim(token.comment) : '';
-      return token.name + '=' + color + comment + ';';
-    },
-    stripe: function(token) {
-      return token.name + token.count;
-    },
-    pivot: function(token) {
-      return token.name + '/' + token.count;
+
+  options.join = function(components) {
+    var parts = [];
+    if (components.colors.length > 0) {
+      parts.push(components.colors.join(' '));
     }
-  };
-  options.prepareNestedBlock = function(nestedBlock) {
-    var result = [];
-    result.push(utils.stripeToPivot(_.first(nestedBlock)));
-    if (nestedBlock.length > 2) {
-      result = result.concat(nestedBlock.slice(1, nestedBlock.length - 1));
+    if (components.warp != components.weft) {
+      parts.push(components.warp + ' ' + options.warpAndWeftSeparator +
+        ' ' + components.weft);
+    } else {
+      parts.push(components.warp);
     }
-    result.push(utils.stripeToPivot(_.last(nestedBlock)));
-    return result;
+    return parts.join('\n');
   };
-  options.prepareRootBlock = function(block) {
-    return block;
-  };
-  options.joinComponents = function(formattedSett, originalSett) {
-    var threadcount = formattedSett.warp;
-    var weft = formattedSett.weft;
-    if ((weft != '') && (weft != formattedSett.warp)) {
-      threadcount += ' . ' + formattedSett.weft;
-    }
-    return utils.trim([formattedSett.colors, threadcount].join('\n'));
-  };
+
   return render.format(options);
 }
 

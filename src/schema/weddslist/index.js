@@ -1,11 +1,13 @@
 'use strict';
 
+var utils = require('../../utils');
+
 module.exports.id = 'weddslist';
 module.exports.name = 'Syntax by Weddslist (TDF)';
 module.exports.parse = require('./parse');
 module.exports.format = require('./format');
 
-module.exports.colors = {
+module.exports.colors = utils.color.buildColorMap({
   /* eslint-disable key-spacing */
   W:  '#ffffff', TR: '#ffffe9', R: '#800000',
   A:  '#80ffff', X:  '#00ff00', D: '#404040',
@@ -18,4 +20,4 @@ module.exports.colors = {
   C:  '#008080', Q:  '#0000ff', B: '#000080',
   Z:  '#ff7dff', LR: '#ff8080', O: '#804000'
   /* eslint-enable key-spacing */
-};
+});

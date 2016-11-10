@@ -1,24 +1,36 @@
 'use strict';
 
+var pattern = /^\s+/i;
 var utils = require('../../utils');
 
-var pattern = /^\s+/i;
+function parse(context, offset) {
+  var source = context.source;
+  var chunkSize = 10;
+  var result = '';
+  while (true) {
+    var chunk = source.substr(offset, chunkSize);
+    var matches = pattern.exec(chunk);
+    if (!matches) {
+      break;
+    }
+    result += matches[0];
+    if (matches[0].length < chunkSize) {
+      // Don't wait for next turn
+      break;
+    }
+  }
 
-function parser(str, offset) {
-  // Try to capture at most 10 characters. If there are more
-  // whitespaces - we'll capture them on a next turn
-  var matches = pattern.exec(str.substr(offset, 10));
-  if (matches) {
+  if (result != '') {
     return {
-      type: utils.TokenType.whitespace,
-      value: matches[0],
-      length: matches[0].length
+      type: utils.token.whitespace,
+      value: result,
+      length: result.length
     };
   }
 }
 
 function factory() {
-  return parser;
+  return parse;
 }
 
 module.exports = factory;

@@ -2,213 +2,171 @@
 
 var _ = require('lodash');
 var utils = require('../utils');
-var errors = require('../errors');
 
 var defaultOptions = {
+  // Error handler
+  errorHandler: function(error, data, severity) {
+    // Do nothing
+  },
   // function to filter parsed tokens: (tokens) => { return modifiedTokens; }
-  filterTokens: null,
-  // Fail on invalid tokens; tokens outside warp and weft; multiple warp
-  // and weft delimiters, etc.
-  failOnMalformedSequence: true,
-  // function to transform newly built AST: (sett) => { return modifiedSett; }
-  transformSett: null
+  processTokens: null,
+  // function to transform newly built AST: (ast) => { return modifiedAst; }
+  transformSyntaxTree: null
 };
 
-function splitWarpAndWeft(tokens, options) {
-  var colors = [];
-  var warp = null;
-  var weft = null;
-  var currentBlock = 'colors';
-  var i;
-  var token;
+/*
+  <sett> ::= [ { <color> } ]
+    <sequence> |
+    <warp> [ <weft> ] |
+    [ <warp> ] <weft> |
+    <weft> <warp>
 
-  for (i = 0; i < tokens.length; i++) {
-    token = tokens[i];
-    switch (currentBlock) {
-      case 'colors': {
-        if (utils.isColor(token)) {
-          colors.push(token);
-          continue;
-        }
-        if (utils.isLiteral(token)) {
-          switch (token.value) {
-            case '[':
-              if (!warp) {
-                warp = [];
-                currentBlock = 'warp';
-                continue;
-              }
-              break;
-            case ']':
-              if (!weft) {
-                weft = [];
-                currentBlock = 'weft';
-                continue;
-              }
-              break;
-            default: break;
-          }
-        }
-        break;
-      }
-      case 'warp': {
-        if (utils.isStripe(token)) {
-          warp.push(token);
-          continue;
-        }
-        if (utils.isLiteral(token)) {
-          switch (token.value) {
-            case '(':
-              warp.push(token);
-              continue;
-            case ')':
-              warp.push(token);
-              continue;
-            case ']':
-              if (!weft) {
-                weft = [];
-                currentBlock = 'weft';
-                continue;
-              }
-              break;
-            default: break;
-          }
-        }
-        break;
-      }
-      case 'weft': {
-        if (utils.isStripe(token)) {
-          weft.push(token);
-          continue;
-        }
-        if (utils.isLiteral(token)) {
-          switch (token.value) {
-            case '(':
-              weft.push(token);
-              continue;
-            case ')':
-              weft.push(token);
-              continue;
-            case '[':
-              if (!warp) {
-                warp = [];
-                currentBlock = 'warp';
-                continue;
-              }
-              break;
-            default: break;
-          }
-        }
-        break;
-      }
-      default:
-        break;
-    }
-    // If we are here - we were unable to process token, so trigger error
-    if (options.failOnMalformedSequence) {
-      throw new errors.InvalidToken(token);
-    }
-  }
+  <warp> ::= '[' <sequence>
+  <weft> ::= ']' <sequence>
 
-  var result = {
-    colors: colors,
-    warp: warp || [],
-    weft: weft || []
-  };
-
-  if (result.warp.length == 0) {
-    result.warp = result.weft;
-  }
-  if (result.weft.length == 0) {
-    result.weft = result.warp;
-  }
-
-  return result;
-}
-
-function buildColorMap(tokens) {
-  var result = {};
-  _.each(tokens, function(token) {
-    result[token.name] = token.color;
-  });
-  return result;
-}
-
-function checkParenthesisSyntax(tokens, options) {
-  if (tokens.length == 0) {
-    return true;
-  }
-
-  var openingCount = 0;
-  var closingCount = 0;
-
-  _.each(tokens, function(token) {
-    if (utils.isOpeningParenthesis(token)) {
-      if ((openingCount == 1) && options.failOnMalformedSequence) {
-        throw new errors.InvalidToken(token);
-      }
-      openingCount++;
-    }
-    if (utils.isClosingParenthesis(token)) {
-      if ((closingCount == 1) && options.failOnMalformedSequence) {
-        throw new errors.InvalidToken(token);
-      }
-      closingCount++;
-    }
-  });
-
-  if ((openingCount > 1) || (closingCount > 1)) {
-    return false;
-  }
-
-  if (
-    utils.isOpeningParenthesis(_.first(tokens)) &&
-    utils.isClosingParenthesis(_.last(tokens))
-  ) {
-    return true;
-  }
-
-  if (tokens.length >= 4) {
-    if (
-      utils.isOpeningParenthesis(tokens[1]) &&
-      utils.isClosingParenthesis(tokens[tokens.length - 2])
-    ) {
-      return true;
-    }
-  }
-
-  if (options.failOnMalformedSequence) {
-    var token = _.findLast(tokens, utils.isLiteral);
-    if (!token) {
-      // Hm. We have no parenthesis at all
-      return true;
-    }
-
-    throw new errors.InvalidToken(token);
-  }
-  return false;
-}
+  <sequence> ::= <reflected> | <repetitive>
+  <reflected> ::= <stripe> '(' { <stripe> } ')' <stripe>
+  <repetitive> ::= [ '(' ] { <stripe> } [ ')' ]
+*/
 
 function buildTree(tokens, options) {
-  var result = _.clone(tokens);
+  var first;
+  var last;
+  var isReflected = false;
 
-  if (!checkParenthesisSyntax(result, options)) {
-    result = _.filter(result, function(token) {
-      return !utils.isLiteral(token);
-    });
-  }
+  tokens = _.filter(tokens, function(token) {
+    return !token.isWarpStart && !token.isWeftStart;
+  });
 
-  if (result.length >= 2) {
-    var isReflective = utils.isOpeningParenthesis(result[1]);
-    result = _.filter(result, function(token) {
-      return !utils.isLiteral(token);
-    });
-    if (isReflective && (result.length > 0)) {
-      result = [result];
+  // Strip parenthesis at beginning and end
+  if (tokens.length >= 2) {
+    first = _.first(tokens);
+    last = _.last(tokens);
+    if (first.isBlockBodyStart && last.isBlockBodyEnd) {
+      tokens.splice(0, 1);
+      tokens.splice(-1, 1);
+    } else {
+      if (first.isBlockBodyStart) {
+        options.errorHandler(
+          new Error(utils.error.message.unexpectedToken),
+          {token: first},
+          utils.error.severity.error
+        );
+        tokens.splice(0, 1);
+      }
+      if (last.isBlockBodyStart) {
+        options.errorHandler(
+          new Error(utils.error.message.unexpectedToken),
+          {token: last},
+          utils.error.severity.error
+        );
+        tokens.splice(-1, 1);
+      }
     }
   }
 
-  return result;
+  // Check if sequence is reflected
+  if (tokens.length >= 4) {
+    first = _.first(tokens);
+    last = _.last(tokens);
+    if (first.isStripe && last.isStripe) {
+      first = tokens[1];
+      last = tokens[tokens.length - 2];
+      if (first.isBlockBodyStart && last.isBlockBodyEnd) {
+        isReflected = true;
+        tokens.splice(1, 1);
+        tokens.splice(-2, 1);
+      }
+    }
+  }
+
+  // Convert all tokens to items
+  var items = _.chain(tokens)
+    .map(function(token) {
+      if (token.isStripe) {
+        return utils.node.newStripe(token);
+      }
+      options.errorHandler(
+        new Error(utils.error.message.unexpectedToken),
+        {token: token},
+        utils.error.severity.error
+      );
+      return null;
+    })
+    .filter()
+    .value();
+
+  // Check for <stripe> '(' ')' <stripe>
+  if (items.length <= 2) {
+    isReflected = false;
+  }
+
+  return utils.node.newRootBlock(items, isReflected);
+}
+
+function extractSequence(tokens, result, options, shouldBreak) {
+  var first = _.first(tokens);
+  _.each(tokens, function(token) {
+    if (shouldBreak(token)) {
+      return false; // Break
+    }
+    if (token.isWarpStart && (token !== first)) {
+      options.errorHandler(
+        new Error(utils.error.message.multipleWarpAnWeftSeparator),
+        {token: token},
+        utils.error.severity.warning
+      );
+    }
+    result.push(token);
+  });
+}
+
+function extractWarpAndWeft(tokens, warp, weft, options) {
+  if (tokens.length == 0) {
+    return;
+  }
+
+  var first;
+  var isWarpExtracted = false;
+
+  // Try to extract warp
+  first = _.first(tokens);
+  if (first.isWarpStart || first.isStripe || first.isBlockBodyStart) {
+    extractSequence(tokens, warp, options, function(token) {
+      return token.isWeftStart;
+    });
+    tokens.splice(0, warp.length);
+    isWarpExtracted = true;
+  }
+
+  // Try to extract weft
+  first = _.first(tokens);
+  if (first && first.isWeftStart) {
+    extractSequence(tokens, weft, options, function(token) {
+      return token.isWarpStart;
+    });
+    tokens.splice(0, weft.length);
+  }
+
+  // If warp was not extracted, try again, but more strict
+  if (!isWarpExtracted) {
+    first = _.first(tokens);
+    if (first && first.isWarpStart) {
+      extractSequence(tokens, warp, options, function(token) {
+        return token.isWeftStart;
+      });
+      tokens.splice(0, warp.length);
+    }
+  }
+
+  // Trigger error for rest tokens
+  _.each(tokens, function(token) {
+    options.errorHandler(
+      new Error(utils.error.message.extraTokenInInputSequence),
+      {token: token},
+      utils.error.severity.warning
+    );
+  });
 }
 
 function buildSyntaxTree(tokens, options) {
@@ -216,35 +174,50 @@ function buildSyntaxTree(tokens, options) {
   if (!_.isArray(tokens)) {
     return tokens;
   }
-  if (_.isFunction(options.filterTokens)) {
-    tokens = options.filterTokens(tokens);
+  if (_.isFunction(options.processTokens)) {
+    tokens = options.processTokens(tokens);
     if (!_.isArray(tokens)) {
       return tokens;
     }
   }
 
-  tokens = splitWarpAndWeft(tokens, options);
-  var warpIsSameAsWeft = tokens.warp === tokens.weft;
+  // Extract colors; split warp and weft
+  var colorTokens = _.filter(tokens, function(token) {
+    return token.isColor;
+  });
+  var warpTokens = [];
+  var weftTokens = [];
+  extractWarpAndWeft(_.filter(tokens, function(token) {
+    return !token.isColor;
+  }), warpTokens, weftTokens, options);
+  if (warpTokens.length == 0) {
+    warpTokens = weftTokens;
+    weftTokens = [];
+  }
+  if (weftTokens.length == 0) {
+    weftTokens = warpTokens;
+  }
 
   var result = {};
-  result.colors = buildColorMap(tokens.colors);
-
-  result.warp = buildTree(tokens.warp, options);
-  if (warpIsSameAsWeft) {
+  result.colors = utils.color.buildColorMap(colorTokens);
+  result.warp = buildTree(warpTokens, options);
+  if (weftTokens === warpTokens) {
     result.weft = result.warp;
   } else {
-    result.weft = buildTree(tokens.weft, options);
+    result.weft = buildTree(weftTokens, options);
   }
 
-  if (_.isFunction(options.transformSett)) {
-    result = options.transformSett(result);
+  if (_.isFunction(options.transformSyntaxTree)) {
+    result = options.transformSyntaxTree(result);
   }
-
   return result;
 }
 
 function factory(options) {
   options = _.extend({}, defaultOptions, options);
+  if (!_.isFunction(options.errorHandler)) {
+    options.errorHandler = defaultOptions.errorHandler;
+  }
   return function(tokens) {
     return buildSyntaxTree(tokens, options);
   };

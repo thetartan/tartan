@@ -1,56 +1,36 @@
 'use strict';
 
 var _ = require('lodash');
-var mergeStripes = require('./merge-stripes');
+var utils = require('../utils');
 
-var defaultOptions = {
-  mergeStripes: true
-};
-
-function flatten(tokens, isNested) {
+function flatten(block) {
   var result = [];
-  var current;
 
-  for (var i = 0; i < tokens.length; i++) {
-    current = tokens[i];
-    if (_.isArray(current)) {
+  // Flatten nested blocks
+  _.each(block.items, function(item) {
+    if (item.isBlock) {
       // Flatten nested block
-      current = flatten(current, true);
-      [].push.apply(result, current);
+      item = flatten(item);
+      [].push.apply(result, item.items);
     } else {
-      result.push(current);
+      result.push(item);
     }
-  }
+  });
 
-  // If we are flattening nested block, we need to reflect it
-  // Do not reflect blocks with single stripe
-  if (isNested && (result.length > 1)) {
-    var rest = result.slice(0, result.length - 1);
-    rest.reverse();
-    result = result.concat(rest);
-  }
-
-  // Special case.
-  // All nested blocks should be reflected relative to the last pivot;
-  // first pivot is duplicated.
-  // But if entire threadcount should be reflected, algorithm a bit differs:
-  // R/10 K20 Y10 W/2 should become R10 K20 Y10 W2 Y10 K20 - without last R20.
-  // So let's check this case:
-  if (!isNested && (tokens.length == 1) && _.isArray(tokens[0])) {
-    result.pop();
-  }
-
-  return result;
+  // Reflect and repeat
+  block = _.clone(block);
+  block.items = result;
+  return utils.sett.reflectAndRepeat(block);
 }
 
-function transform(sett, options) {
+function transform(sett) {
   var result = _.clone(sett);
   var warpIsSameAsWeft = sett.warp == sett.weft;
 
-  if (_.isArray(sett.warp)) {
+  if (_.isObject(sett.warp)) {
     result.warp = flatten(sett.warp);
   }
-  if (_.isArray(sett.weft)) {
+  if (_.isObject(sett.weft)) {
     if (warpIsSameAsWeft) {
       result.weft = result.warp;
     } else {
@@ -58,18 +38,11 @@ function transform(sett, options) {
     }
   }
 
-  if (options.mergeStripes) {
-    result = mergeStripes()(result);
-  }
-
   return result;
 }
 
-function factory(options) {
-  options = _.extend({}, defaultOptions, options);
-  return function(sett) {
-    return transform(sett, options);
-  };
+function factory() {
+  return transform;
 }
 
 module.exports = factory;
