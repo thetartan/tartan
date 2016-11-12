@@ -17,7 +17,7 @@ var defaultOptions = {
     },
     block: function(block) {
       var result = _.chain(block.formattedItems).join(' ').trim().value();
-      return result != '' ? '[' + result + ']' : '';
+      return block.reflect && (result != '') ? '[' + result + ']' : result;
     }
   }
 };
