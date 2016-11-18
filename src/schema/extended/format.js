@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var index = require('./index');
 var render = require('../../render');
+var transform = require('../../transform');
 
 var defaultOptions = {
   format: {
@@ -42,6 +43,11 @@ function factory(options) {
   if (options.warpAndWeftSeparator == '') {
     options.warpAndWeftSeparator = index.warpAndWeftSeparator;
   }
+
+  options.transformSyntaxTree = transform([
+    options.transformSyntaxTree,
+    transform.fold()
+  ]);
 
   options.join = function(components) {
     var parts = [];

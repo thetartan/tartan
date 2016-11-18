@@ -116,7 +116,10 @@ function prepareWeave(weave, defaultWeave) {
 
 function preparePattern(node, weave, colors, defaultColors) {
   var items = _.isObject(node) && node.isBlock ? node.items : [];
-  var pattern = utils.sett.compile(items, colors, defaultColors);
+  var pattern = [];
+  if (items.length > 0) {
+    pattern = utils.sett.compile(items, colors, defaultColors);
+  }
   var metrics = utils.sett.getPatternMetrics(pattern, weave);
 
   return {
@@ -177,6 +180,11 @@ function renderEmpty(canvas) {
   return {x: 0, y: 0};
 }
 
+renderEmpty.metrics = getMetrics(defaultOptions.weave,
+  preparePattern(null, defaultOptions.weave, {}, {}),
+  preparePattern(null, defaultOptions.weave, {}, {})
+);
+
 function factory(sett, options) {
   if (!_.isObject(sett)) {
     return renderEmpty;
@@ -199,7 +207,7 @@ function factory(sett, options) {
       sett.colors, options.defaultColors);
   }
 
-  if ((warp.length == 0) && (weft.length == 0)) {
+  if ((warp.lengthOfPattern == 0) && (weft.lengthOfPattern == 0)) {
     return renderEmpty;
   }
 
