@@ -14,11 +14,29 @@ var defaultOptions = {
   transformSyntaxTree: null
 };
 
+function isMatchingToken(opening, closing) {
+  return (
+    utils.token.isOpeningSquareBracket(opening) &&
+    utils.token.isClosingSquareBracket(closing)
+  ) || (
+    utils.token.isOpeningParenthesis(opening) &&
+    utils.token.isClosingParenthesis(closing)
+  );
+}
+
 /*
   <sett> ::= <sequence> [ '//' <sequence> ]
-  <sequence> ::= { <color> | <stripe> | <pivots> | <block> }
-  <block> ::= '[' <sequence> ']'
-  <pivots> ::= <pivot> [{ <color> | <stripe> }] <pivot>
+  <sequence> ::= {
+    <color> |
+    [ <repeat> ] <stripe> [ <repeat> ] |
+    <pivots> |
+    [ <repeat> ] <block> [ <repeat> ]
+  }
+  <block> ::= '[' <sequence> ']' | '(' <sequence> ')'
+  <pivots> ::=
+    [ <repeat> ] <pivot> [ <repeat> ]
+    [{ <color> | [ <repeat> ] <stripe> [ <repeat> ] }]
+    [ <repeat> ] <pivot> [ <repeat> ]
 */
 
 function buildTree(tokens, options) {
@@ -75,17 +93,25 @@ function buildTree(tokens, options) {
     if (token.isBlockEnd) {
       if (stack.length > 1) {
         current = stack.pop();
-        if (current.items.length > 0) {
-          parent = _.last(stack);
-          parent.items.push(utils.node.newBlock(current.items, true));
+        if (isMatchingToken(current.token, token)) {
+          if (current.items.length > 0) {
+            parent = _.last(stack);
+            parent.items.push(utils.node.newBlock(
+              current.items, // items
+              utils.token.isClosingSquareBracket(token), // reflect
+              current.token.repeat * token.repeat // repeat
+            ));
+          }
+          return;
         }
-      } else {
-        options.errorHandler(
-          new Error(utils.error.message.unmatchedBlockEnd),
-          {token: token},
-          utils.error.severity.error
-        );
+        // Put block back onto stack and proceed to showing an error
+        stack.push(current);
       }
+      options.errorHandler(
+        new Error(utils.error.message.unmatchedBlockEnd),
+        {token: token},
+        utils.error.severity.error
+      );
       return;
     }
     options.errorHandler(
@@ -125,6 +151,68 @@ function buildTree(tokens, options) {
   return utils.node.newRootBlock(current, isReflected);
 }
 
+function processRepeats(tokens, options) {
+  return _.chain(tokens)
+    // Process suffix repeats
+    .reduce(function(accumulator, item) {
+      if (item.isRepeat && item.isSuffix) {
+        var last = accumulator.pop();
+        if (last) {
+          last = _.clone(last);
+          last.repeat = last.repeat > 1 ? last.repeat : 1;
+          last.repeat *= item.count;
+          accumulator.push(last);
+        } else {
+          options.errorHandler(
+            new Error(utils.error.message.unexpectedToken),
+            {token: item},
+            utils.error.severity.error
+          );
+        }
+      } else {
+        item = _.clone(item);
+        item.repeat = item.repeat > 1 ? item.repeat : 1;
+        accumulator.push(item);
+      }
+      return accumulator;
+    }, [])
+    // Process prefix repeats; result will be reversed - so after this
+    // turn it back
+    .reduceRight(function(accumulator, item) {
+      if (item.isRepeat && item.isPrefix) {
+        var last = accumulator.pop();
+        if (last) {
+          last = _.clone(last);
+          last.repeat = last.repeat > 1 ? last.repeat : 1;
+          last.repeat *= item.count;
+          accumulator.push(last);
+        } else {
+          options.errorHandler(
+            new Error(utils.error.message.unexpectedToken),
+            {token: item},
+            utils.error.severity.error
+          );
+        }
+      } else {
+        item = _.clone(item);
+        item.repeat = item.repeat > 1 ? item.repeat : 1;
+        accumulator.push(item);
+      }
+      return accumulator;
+    }, [])
+    .reverse()
+    // Apply repeats to stripes and pivots
+    .map(function(item) {
+      if ((item.isStripe || item.isPivot) && (item.repeat > 1)) {
+        item = _.clone(item);
+        item.count *= item.repeat;
+        item.repeat = 1;
+      }
+      return item;
+    })
+    .value();
+}
+
 function buildSyntaxTree(tokens, options) {
   // Some pre-validation and filtering
   if (!_.isArray(tokens)) {
@@ -160,6 +248,10 @@ function buildSyntaxTree(tokens, options) {
       current.push(token);
     }
   });
+
+  warpTokens = processRepeats(warpTokens, options);
+  weftTokens = processRepeats(weftTokens, options);
+
   if (warpTokens.length == 0) {
     warpTokens = weftTokens;
     weftTokens = [];

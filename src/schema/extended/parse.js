@@ -6,7 +6,6 @@ var defaults = require('../../defaults');
 var parse = require('../../parse');
 var filter = require('../../filter');
 var syntax = require('../../syntax');
-var transform = require('../../transform');
 var utils = require('../../utils');
 
 /*
@@ -33,7 +32,13 @@ function factory(options) {
     parse.stripe(),
     parse.literal('['),
     parse.literal(']'),
+    parse.literal('('),
+    parse.literal(')'),
     parse.literal(options.warpAndWeftSeparator),
+    parse.repeat({
+      allowAsPrefix: true,
+      allowAsSuffix: true
+    }),
     parse.color({
       allowLongNames: true,
       colorPrefix: /[=]?[#]/,

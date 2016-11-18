@@ -14,15 +14,20 @@ var defaultOptions = {
   isPivot: function(token, index, tokens) {
     return utils.token.isPivot(token);
   },
+  isRepeat: function(token, index, tokens) {
+    return utils.token.isRepeat(token);
+  },
   isWarpAndWeftSeparator: function(token, index, tokens) {
     return utils.token.isLiteral(token) &&
       (token.value == defaults.warpAndWeftSeparator);
   },
   isBlockStart: function(token, index, tokens) {
-    return utils.token.isOpeningSquareBracket(token);
+    return utils.token.isOpeningSquareBracket(token) ||
+      utils.token.isOpeningParenthesis(token);
   },
   isBlockEnd: function(token, index, tokens) {
-    return utils.token.isClosingSquareBracket(token);
+    return utils.token.isClosingSquareBracket(token) ||
+      utils.token.isClosingParenthesis(token);
   }
 };
 

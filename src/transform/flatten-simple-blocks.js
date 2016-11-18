@@ -49,6 +49,17 @@ function flatten(block) {
 
   // Try to simplify nested items
   block.items = _.chain(block.items)
+    // Unfold nested blocks if they are not reflective and
+    // should be repeated only once
+    .reduce(function(accumulator, item) {
+      if (item.isBlock && !item.isRoot && !item.reflect && (item.repeat <= 1)) {
+        [].push.apply(accumulator, item.items);
+      } else {
+        accumulator.push(item);
+      }
+      return accumulator;
+    }, [])
+    // Unfold and merge single-color blocks
     .map(function(item) {
       if (item.isBlock) {
         if (item.items.length == 0) {

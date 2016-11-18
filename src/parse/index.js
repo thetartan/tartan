@@ -31,4 +31,5 @@ module.exports = factory;
 module.exports.color = require('./token/color');
 module.exports.stripe = require('./token/stripe');
 module.exports.pivot = require('./token/pivot');
+module.exports.repeat = require('./token/repeat');
 module.exports.literal = require('./token/literal');

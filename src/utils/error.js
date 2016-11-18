@@ -14,7 +14,8 @@ var message = {
   multipleWarpAnWeftSeparator: 'Only one warp/weft separator is allowed',
   unmatchedBlockStart: 'Unmatched block start',
   unmatchedBlockEnd: 'Unmatched block end',
-  extraTokenInInputSequence: 'Extra token in input sequence'
+  extraTokenInInputSequence: 'Extra token in input sequence',
+  invalidMultiplier: 'Invalid multiplier value; replaced with default (1)'
 };
 
 module.exports.severity = severity;

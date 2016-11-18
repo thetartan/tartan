@@ -8,7 +8,8 @@ var tokenType = {
   color: 'color',
   stripe: 'stripe',
   pivot: 'pivot',
-  literal: 'literal'
+  literal: 'literal',
+  repeat: 'repeat'
 };
 
 function isToken(token, type) {
@@ -37,6 +38,10 @@ function isPivot(token) {
 
 function isLiteral(token) {
   return isToken(token, tokenType.literal);
+}
+
+function isRepeat(token) {
+  return isToken(token, tokenType.repeat);
 }
 
 function isSquareBracket(token) {
@@ -160,6 +165,15 @@ function newLiteral(value) {
   return newToken(tokenType.literal, value);
 }
 
+function newRepeat(count) {
+  var result = newToken(tokenType.repeat);
+  result.count = parseInt(count, 10) || 0;
+  if (result.count <= 0) {
+    result.count = 1;
+  }
+  return result;
+}
+
 module.exports = tokenType;
 
 module.exports.isToken = isToken;
@@ -175,6 +189,7 @@ module.exports.isParenthesis = isParenthesis;
 module.exports.isOpeningParenthesis = isOpeningParenthesis;
 module.exports.isClosingParenthesis = isClosingParenthesis;
 module.exports.isLiteral = isLiteral;
+module.exports.isRepeat = isRepeat;
 
 module.exports.pivotToStripe = pivotToStripe;
 module.exports.stripeToPivot = stripeToPivot;
@@ -192,3 +207,4 @@ module.exports.newParenthesis = newParenthesis;
 module.exports.newOpeningParenthesis = newOpeningParenthesis;
 module.exports.newClosingParenthesis = newClosingParenthesis;
 module.exports.newLiteral = newLiteral;
+module.exports.newRepeat = newRepeat;

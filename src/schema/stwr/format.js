@@ -4,7 +4,6 @@ var _ = require('lodash');
 var index = require('./index');
 var render = require('../../render');
 var transform = require('../../transform');
-var defaults = require('../../defaults');
 
 function formatPivot(str) {
   return str.replace(/^([a-z]+)([0-9]+)$/i, '$1/$2');

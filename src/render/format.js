@@ -15,7 +15,16 @@ var defaultOptions = {
     },
     block: function(block) {
       var result = _.chain(block.formattedItems).join(' ').trim().value();
-      return block.reflect && (result != '') ? '[' + result + ']' : result;
+      if (result == '') {
+        return '';
+      }
+      var multiply = block.repeat > 1 ? '*' + block.repeat : '';
+      if (block.isRoot) {
+        result = block.reflect ? '[' + result + ']' : result;
+      } else {
+        result = block.reflect ? '[' + result + ']' : '(' + result + ')';
+      }
+      return result + multiply;
     }
   },
   join: function(components) {

@@ -5,7 +5,6 @@ var defaults = require('../../defaults');
 var parse = require('../../parse');
 var filter = require('../../filter');
 var syntax = require('../../syntax');
-var transform = require('../../transform');
 var utils = require('../../utils');
 
 /*
