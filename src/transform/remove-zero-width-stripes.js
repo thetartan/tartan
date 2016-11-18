@@ -2,22 +2,22 @@
 
 var _ = require('lodash');
 
-// TODO: Last zero-width stripe in block can be removed...
-// ... with modifying previous stripe:
-// [R10 K4 W0] => R10 K4 W0 K4 R10 => R10 K8 R10
-// [R10 K8]              =>           R10 K8 R10
-
 var defaultOptions = {
   keepZeroWidthPivots: true
 };
 
-// Do not remove last stripe in reflected blocks as it is central pivot.
 // Do not remove first stripe in blocks if it is reflected and repeated.
 // Example: [R0 B10 Y2 K5]
 // Wrong: [B10 Y2 K5] => B10 Y2 K5 Y2
 // Right: [R0 B10 Y2 K5]
 //        => R0 B10 Y2 K5 Y2 B10
 //        => B10 Y2 K5 Y2 B10
+//
+// Last zero-width stripe in block can be removed with
+// modifying previous stripe:
+// [R10 K4 W0] => R10 K4 W0 K4 R10 => R10 K8 R10
+// [R10 K8]              =>           R10 K8 R10
+
 function removeZeroWidthStripes(block, options) {
   // Root is always repetitive
   var first = block.reflect && (block.isRoot || (block.repeat > 1)) ?
@@ -51,6 +51,23 @@ function removeZeroWidthStripes(block, options) {
     })
     .filter()
     .value();
+
+  // Try to remove last stripe, if it is zero-width and previous item is stripe
+  if (block.items.length >= 2) {
+    last = _.last(block.items);
+    if (last.isStripe && (last.count <= 0)) {
+      block.items.pop();
+      // If previous item is stripe - duplicate its width:
+      // ... R10 K0 => ... R20
+      var prev = _.last(block.items);
+      if (prev.isStripe) {
+        prev.count *= 2;
+      } else {
+        // keep zero-width stripe :-(
+        block.items.push(last);
+      }
+    }
+  }
 
   return block;
 }
