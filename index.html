@@ -109,10 +109,8 @@
     }
 
     function createCanvasRenderer(sett) {
-      return tartan.render.canvas(sett, {
-        //weave: [1, 1],
-        skipUnsupportedTokens: true,
-        skipInvalidColors: true,
+      return tartan.render.houseOfTartan(sett, {
+        zoom: 2,
         defaultColors: schema.colors,
         transformSyntaxTree: tartan.transform.flatten()
       });

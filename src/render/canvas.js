@@ -6,8 +6,17 @@ var utils = require('../utils');
 
 var defaultOptions = {
   weave: defaults.weave.serge,
+  zoom: 1,
   defaultColors: null,
-  transformSyntaxTree: null
+  transformSyntaxTree: null,
+  hooks: {
+    // `stage`: `false` on before-action and `true` on after-action
+    // `options` can mutate here; `context` is new for each repaint but
+    // the same for each call during single repaint
+    clear: function(context, options, stage) {},
+    renderWarp: function(context, options, stage) {},
+    renderWeft: function(context, options, stage) {}
+  }
 };
 
 function clearCanvas(context, options) {
@@ -21,6 +30,7 @@ function clearCanvas(context, options) {
 
 function renderWarp(context, options) {
   var pattern = options.warp.pattern;
+  var zoom = options.zoom;
   var i;
   var first;
   var item;
@@ -29,19 +39,19 @@ function renderWarp(context, options) {
   var x = options.offset.x;
   for (i = 0; i < pattern.length; i++) {
     item = pattern[i];
-    if (x + item[1] > 0) {
+    if (x + item[1] * zoom > 0) {
       first = i;
       break;
     }
-    x += item[1];
+    x += item[1] * zoom;
   }
 
   while (x <= options.width) {
     for (i = first; i < pattern.length; i++) {
       item = pattern[i];
       context.fillStyle = item[0];
-      context.fillRect(x, 0, item[1], options.height);
-      x += item[1];
+      context.fillRect(x, 0, item[1] * zoom, options.height);
+      x += item[1] * zoom;
       if (x >= options.width) {
         break;
       }
@@ -58,25 +68,28 @@ function renderWeft(context, options) {
   var pattern = options.weft.pattern;
   var i;
   var j;
+  var zoom = options.zoom;
   var first;
   var item;
   var y = options.offset.y;
+  var offsetX = options.offset.x;
+  var offsetY = options.offset.y;
   var n = _.sum(options.weave);
-  var offsetX = (options.offset.x) % n;
-  var offsetY = (options.offset.y) % n;
   var offset;
 
   // Find first visible pattern item and its offset
   for (i = 0; i < pattern.length; i++) {
     item = pattern[i];
-    if (y + item[1] > 0) {
+    if (y + item[1] * zoom > 0) {
       first = i;
       break;
     }
-    y += item[1];
+    y += item[1] * zoom;
   }
 
-  context.setLineDash(options.weave);
+  context.setLineDash(_.map(options.weave, function(value) {
+    return value * zoom;
+  }));
 
   while (y <= options.height) {
     for (i = first; i < pattern.length; i++) {
@@ -85,11 +98,11 @@ function renderWeft(context, options) {
 
       // Do not draw outside of visible area
       j = y < 0 ? 0 : y;
-      y += item[1];
+      y += item[1] * zoom;
       for (j; j < y; j++) {
         // Correct offset of each line relating to global (0, 0) point
-        offset = n - (j - offsetY) % n + 1;
-        offset = (offset - offsetX) % n;
+        offset = n - Math.floor((j - offsetY) / zoom) % n;
+        offset = offset * zoom - offsetX;
         context.lineDashOffset = offset;
 
         context.beginPath();
@@ -129,7 +142,7 @@ function preparePattern(node, weave, colors, defaultColors) {
   };
 }
 
-function prepareOffset(offset, warp, weft) {
+function prepareOffset(offset, warp, weft, zoom) {
   var x = 0;
   var y = 0;
   if (_.isObject(offset)) {
@@ -140,14 +153,14 @@ function prepareOffset(offset, warp, weft) {
   // `lengthOfCycle` is a number when pattern completely repeats
   // (including line offsets), so we can reduce size of offset to
   // avoid numeric overflows
-  x %= warp.lengthOfCycle;
+  x %= (warp.lengthOfCycle * zoom);
   if (x > 0) {
-    x -= warp.lengthOfCycle;
+    x -= (warp.lengthOfCycle * zoom);
   }
 
-  y %= weft.lengthOfCycle;
+  y %= (weft.lengthOfCycle * zoom);
   if (y > 0) {
-    y -= weft.lengthOfCycle;
+    y -= (weft.lengthOfCycle * zoom);
   }
 
   return {
@@ -190,9 +203,25 @@ function factory(sett, options) {
     return renderEmpty;
   }
 
-  options = _.extend({}, defaultOptions, options);
+  options = _.merge({}, defaultOptions, options);
+  // Validate hooks
+  var hooks = options.hooks;
+  if (!_.isObject(options.hooks)) {
+    hooks = options.hooks = {};
+  }
+  _.each(defaultOptions.hooks, function(value, key) {
+    if (!_.isFunction(hooks[key])) {
+      hooks[key] = defaultOptions.hooks[key];
+    }
+  });
+
   if (_.isFunction(options.transformSyntaxTree)) {
     sett = options.transformSyntaxTree(sett);
+  }
+
+  var zoom = parseInt(options.zoom, 10) || 0;
+  if (zoom < 1) {
+    zoom = 1;
   }
 
   var warpIsSameAsWeft = sett.weft === sett.warp;
@@ -214,12 +243,13 @@ function factory(sett, options) {
   var result = function(canvas, offset, repeat) {
     repeat = (arguments.length == 2) || !!repeat;
 
-    offset = repeat ? prepareOffset(offset, warp, weft) : {x: 0, y: 0};
+    offset = repeat ? prepareOffset(offset, warp, weft, zoom) : {x: 0, y: 0};
 
     var options = {
       warp: warp,
       weft: weft,
       weave: weave,
+      zoom: zoom,
       width: Math.ceil(parseFloat(canvas.width) || 0),
       height: Math.ceil(parseFloat(canvas.height) || 0),
       offset: offset,
@@ -228,9 +258,17 @@ function factory(sett, options) {
 
     if ((options.width > 0) && (options.height > 0)) {
       var context = canvas.getContext('2d');
+      hooks.clear(context, options, false);
       options = clearCanvas(context, options);
+      hooks.clear(context, options, true);
+
+      hooks.renderWarp(context, options, false);
       renderWarp(context, options);
+      hooks.renderWarp(context, options, true);
+
+      hooks.renderWeft(context, options, false);
       renderWeft(context, options);
+      hooks.renderWeft(context, options, true);
     }
 
     return offset;
