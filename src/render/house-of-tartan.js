@@ -12,16 +12,18 @@ shadow.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAAD' +
 
 function renderWeft(context, options, stage) {
   if (stage) {
-    var dx = options.offset.x;
-    var dy = options.offset.y;
+    if (options.zoom == 2) {
+      var dx = options.offset.x;
+      var dy = options.offset.y;
 
-    context.save();
-    context.translate(dx, dy);
+      context.save();
+      context.translate(dx, dy);
 
-    context.fillStyle = context.createPattern(shadow, 'repeat');
-    context.fillRect(-dx, -dy, options.width, options.height);
+      context.fillStyle = context.createPattern(shadow, 'repeat');
+      context.fillRect(-dx, -dy, options.width, options.height);
 
-    context.restore();
+      context.restore();
+    }
   }
 }
 
@@ -36,3 +38,12 @@ function factory(sett, options) {
 }
 
 module.exports = factory;
+// Define some properties for `factory()` function
+Object.defineProperty(module.exports, 'id', {
+  enumerable: true,
+  value: 'house-of-tartan'
+});
+Object.defineProperty(module.exports, 'name', {
+  enumerable: true,
+  value: 'House of Tartan'
+});

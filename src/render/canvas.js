@@ -10,10 +10,14 @@ var defaultOptions = {
   defaultColors: null,
   transformSyntaxTree: null,
   hooks: {
+    // Called after renderer fills up all options; it's a good place
+    // to modify options object
+    configure: function(options) {},
     // `stage`: `false` on before-action and `true` on after-action
     // `options` can mutate here; `context` is new for each repaint but
     // the same for each call during single repaint
     clear: function(context, options, stage) {},
+    render: function(context, options, stage) {},
     renderWarp: function(context, options, stage) {},
     renderWeft: function(context, options, stage) {}
   }
@@ -253,11 +257,15 @@ function factory(sett, options) {
       width: Math.ceil(parseFloat(canvas.width) || 0),
       height: Math.ceil(parseFloat(canvas.height) || 0),
       offset: offset,
-      repeat: repeat
+      repeat: repeat,
+      canvas: canvas
     };
+    hooks.configure(canvas, options);
 
     if ((options.width > 0) && (options.height > 0)) {
       var context = canvas.getContext('2d');
+      hooks.render(context, options, false);
+
       hooks.clear(context, options, false);
       options = clearCanvas(context, options);
       hooks.clear(context, options, true);
@@ -269,6 +277,8 @@ function factory(sett, options) {
       hooks.renderWeft(context, options, false);
       renderWeft(context, options);
       hooks.renderWeft(context, options, true);
+
+      hooks.render(context, options, true);
     }
 
     return offset;
@@ -280,3 +290,12 @@ function factory(sett, options) {
 }
 
 module.exports = factory;
+// Define some properties for `factory()` function
+Object.defineProperty(module.exports, 'id', {
+  enumerable: true,
+  value: 'canvas'
+});
+Object.defineProperty(module.exports, 'name', {
+  enumerable: true,
+  value: 'Simple'
+});

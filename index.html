@@ -109,8 +109,7 @@
     }
 
     function createCanvasRenderer(sett) {
-      return tartan.render.houseOfTartan(sett, {
-        zoom: 2,
+      return tartan.render.canvas(sett, {
         defaultColors: schema.colors,
         transformSyntaxTree: tartan.transform.flatten()
       });
