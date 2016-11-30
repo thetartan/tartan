@@ -65,7 +65,10 @@
 
   <div id="editor-container" class="section-wrapper">
     <div class="container"><textarea></textarea></div>
-    <div style="margin-top: 10px;"><button type="button">Rebuild</button></div>
+    <div style="margin-top: 10px;">
+      <button type="button" id="button-rebuild">Rebuild</button>
+      <button type="button" id="button-optimize">Optimize</button>
+    </div>
   </div>
 
   <div id="canvas-container" class="section-wrapper container">
@@ -163,9 +166,23 @@
       rebuild();
     })(
       editor,
-      document.querySelector('#editor-container button'),
+      document.querySelector('#editor-container #button-rebuild'),
       document.querySelector('#formatted-container pre'),
       repaint);
+
+    (function(button) {
+      var optimize = tartan.transform([
+        tartan.transform.fold({})
+      ]);
+
+      button.addEventListener('click', function() {
+        var sett = parse(editor.value);
+        sett = optimize(sett);
+        console.log(sett);
+      });
+    })(
+      document.querySelector('#editor-container #button-optimize')
+    );
 
     // Canvas
     (function(canvas, repaint) {
