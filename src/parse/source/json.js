@@ -10,3 +10,12 @@ function factory(source) {
 }
 
 module.exports = factory;
+// Define some properties for `factory()` function
+Object.defineProperty(module.exports, 'id', {
+  enumerable: true,
+  value: 'json'
+});
+Object.defineProperty(module.exports, 'name', {
+  enumerable: true,
+  value: 'JSON'
+});
