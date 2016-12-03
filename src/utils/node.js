@@ -63,11 +63,20 @@ function calculateNodeWeight(node, returnRawWeight) {
     }
 
     if (node.isBlock && _.isArray(node.items) && (node.items.length > 0)) {
-      blockCount++;
+      if (!node.isRoot) {
+        blockCount++;
+      }
+      var multiplier = node.reflect ? 2 : 1;
       _.each(node.items, function(item) {
-        if (_.isObject(item) && item.isBlock) {
-          var nested = calculateNodeWeight(item, true);
-          blockCount += nested.blocks;
+        if (_.isObject(item)) {
+          if (item.isBlock) {
+            var nested = calculateNodeWeight(item, true);
+            blockCount += nested.blocks * multiplier;
+          }
+          if (item.isStripe && node.isRoot && !node.reflect) {
+            // Calculate only stripes in root if it is not reflected
+            stripeCount++;
+          }
         }
       });
     }
@@ -78,7 +87,7 @@ function calculateNodeWeight(node, returnRawWeight) {
   }
 
   if ((blockCount == 0) && (stripeCount == 0)) {
-    return Number.MAX_VALUE;
+    return node.isRoot ? 0 : Number.MAX_VALUE;
   }
 
   return Math.sqrt(blockCount * blockCount + stripeCount * stripeCount);

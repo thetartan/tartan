@@ -71,12 +71,12 @@
     </div>
   </div>
 
-  <div id="canvas-container" class="section-wrapper container">
-    <canvas></canvas>
-  </div>
-
   <div id="formatted-container" class="section-wrapper container">
     <pre></pre>
+  </div>
+
+  <div id="canvas-container" class="section-wrapper container">
+    <canvas></canvas>
   </div>
 
   <div class="section-wrapper">
@@ -95,6 +95,10 @@
     var editor = document.querySelector('#editor-container textarea');
     editor.value = 'K#101010 BLACK; B#2c2c80 BLUE; G#006818 GREEN;\n' +
       'B/24 K4 B4 K4 B4 K20 G24 K6 G24 K20 B22 K4 B/4';
+
+    // editor.value = 'K30 B24 K6 B6 K6 B24 K30 G4';
+
+    // editor.value = 'a1b1a1x1a1b1a1m1a1b1a1x1a1b1a1';
 
     var canvas = document.querySelector('#canvas-container canvas');
 
@@ -172,12 +176,21 @@
 
     (function(button) {
       var optimize = tartan.transform([
-        tartan.transform.fold({})
+        tartan.transform.fold({
+          allowRootReorder: true,
+          allowNestedBlocks: true,
+          maxFoldLevels: 3,
+          minBlockSize: 2,
+          greedy: false,
+          allowSplitStripe: true
+        })
       ]);
 
       button.addEventListener('click', function() {
         var sett = parse(editor.value);
+        console.time('Optimize');
         sett = optimize(sett);
+        console.timeEnd('Optimize');
         console.log(sett);
       });
     })(
