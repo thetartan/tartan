@@ -177,11 +177,12 @@
     (function(button) {
       var optimize = tartan.transform([
         tartan.transform.fold({
-          allowRootReorder: true,
+          allowRootReorder: false,
           allowNestedBlocks: true,
-          maxFoldLevels: 3,
+          maxFoldLevels: 2,
           minBlockSize: 2,
           greedy: false,
+          processExistingBlocks: true,
           allowSplitStripe: true
         })
       ]);

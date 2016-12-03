@@ -11,8 +11,7 @@ var defaultOptions = {
   allowNestedBlocks: false, // fold only root
 
   // Next options are applicable only to extended mode:
-  maxFoldLevels: 3, // fold root and up to 2 nested levels; 0 - unlimited
-  // TODO: Implement this ^ option
+  maxFoldLevels: 2, // fold root and up to 2 nested levels; 0 - unlimited
 
   // detected blocks should contain at least 3 stripes when folded
   minBlockSize: 3,
@@ -26,8 +25,7 @@ var defaultOptions = {
   allowSplitStripe: true,
 
   // If sett already contains some nested blocks - try to fold them too
-  processExistingBlocks: true,
-  // TODO: Implement this ^ option
+  processExistingBlocks: false,
 
   // Evaluation function - should return a number that will be used to
   // compare blocks and choose the best variant
@@ -71,7 +69,7 @@ function foldRootBlock(root, options, results) {
     return;
   }
 
-  var items = _.concat(root.items, root.items[0])
+  var items = _.concat(root.items, root.items[0]);
   var resultItems = tryFoldBlock(items);
   if (_.isArray(resultItems)) {
     var result = _.clone(root);
@@ -109,26 +107,31 @@ function findRootBlockVariants(root, options) {
   return results;
 }
 
-function findAllPossibleVariants(items, options, results) {
+function findAllPossibleVariants(items, options, results, level) {
   results.push(items);
+
+  if (level <= 0) {
+    return;
+  }
+
   if (items.length >= options.minBlockSize * 2 - 1) {
     var from = options.minBlockSize - 1;
     var to = items.length - options.minBlockSize;
     for (var i = from; i <= to; i++) {
-      tryFindNestedBlocks(i, items, _.extend(options, {
+      tryFindNestedBlocks(i, items, _.extend({}, options, {
         allowSplitStripe: false
-      }), results);
+      }), results, level - 1);
       if (options.allowSplitStripe) {
-        tryFindNestedBlocks(i, items, _.extend(options, {
+        tryFindNestedBlocks(i, items, _.extend({}, options, {
           allowSplitStripe: true
-        }), results);
+        }), results, level - 1);
       }
     }
   }
 }
 
 function processNestedVariants(items, left, right, middle, appendToPrefix,
-  prependToSuffix, options, results) {
+  prependToSuffix, options, results, level) {
   if (middle.length < options.minBlockSize) {
     return;
   }
@@ -139,14 +142,14 @@ function processNestedVariants(items, left, right, middle, appendToPrefix,
   }
 
   var middleVariants = [];
-  findAllPossibleVariants(middle, options, middleVariants);
+  findAllPossibleVariants(middle, options, middleVariants, level);
 
   var suffix = items.slice(right, items.length);
   if (prependToSuffix) {
     suffix.splice(0, 0, prependToSuffix);
   }
   var suffixVariants = [];
-  findAllPossibleVariants(suffix, options, suffixVariants);
+  findAllPossibleVariants(suffix, options, suffixVariants, level);
 
   _.each(suffixVariants, function(variant) {
     _.each(middleVariants, function(middle) {
@@ -157,7 +160,7 @@ function processNestedVariants(items, left, right, middle, appendToPrefix,
   });
 }
 
-function tryFindNestedBlocks(index, items, options, results) {
+function tryFindNestedBlocks(index, items, options, results, level) {
   var left;
   var right;
 
@@ -172,16 +175,25 @@ function tryFindNestedBlocks(index, items, options, results) {
       middle.splice(0, 0, items[left]);
     } else
     if (
-      options.allowSplitStripe && items[left.isStripe] &&
+      options.allowSplitStripe && items[left].isStripe &&
       items[right].isStripe && (items[left].name == items[right].name)) {
       var diff = items[left].count - items[right].count;
       if (diff > 0) {
-        appendToPrefix = utils.node.newStripe(
-          items[left].name, Math.abs(diff));
+        appendToPrefix = utils.node.newStripe({
+          name: items[left].name,
+          count: Math.abs(diff)
+        });
       } else {
-        prependToSuffix = utils.node.newStripe(
-          items[left].name, Math.abs(diff));
+        prependToSuffix = utils.node.newStripe({
+          name: items[left].name,
+          count: Math.abs(diff)
+        });
       }
+      var node = _.clone(items[left]);
+      node.count = Math.min(items[left].count, items[right].count);
+      middle.splice(0, 0, node);
+      left--;
+      right++;
       processLast = true;
       break;
     } else {
@@ -192,12 +204,12 @@ function tryFindNestedBlocks(index, items, options, results) {
     right++;
 
     processNestedVariants(items, left, right, middle,
-      appendToPrefix, prependToSuffix, options, results);
+      appendToPrefix, prependToSuffix, options, results, level);
   }
 
   if (processLast) {
     processNestedVariants(items, left, right, middle,
-      appendToPrefix, prependToSuffix, options, results);
+      appendToPrefix, prependToSuffix, options, results, level);
   }
 }
 
@@ -209,7 +221,8 @@ function findNestedBlocks(block, options, results) {
   }
 
   var variants = [];
-  findAllPossibleVariants(block.items, options, variants);
+  findAllPossibleVariants(block.items, options, variants,
+    options.maxFoldLevels);
 
   _.each(variants, function(variant) {
     var result = _.clone(block);
@@ -222,6 +235,10 @@ function findNestedBlocks(block, options, results) {
   });
 }
 
+function processExistingBlocks(root, options, results) {
+  // TODO: Implement
+}
+
 function processTokens(root, options) {
   var variants = [{
     node: root,
@@ -229,17 +246,27 @@ function processTokens(root, options) {
     weight: utils.node.calculateNodeWeight(root)
   }];
 
-  var rootVariants = findRootBlockVariants(root, options);
-  _.each(rootVariants, function(root) {
-    foldRootBlock(root, options, variants);
-    if (options.allowNestedBlocks) {
-      findNestedBlocks(root, options, variants);
-    }
-  });
+  var rootVariants = [root];
+  if (options.allowNestedBlocks && options.processExistingBlocks) {
+    processExistingBlocks(root, options, rootVariants);
+  }
 
-  // Exclude non-folded modified roots
-  var excludeHashes = _.map(_.drop(rootVariants), function(node) {
-    return {hash: utils.node.calculateNodeHash(node)};
+  var excludeHashes = [];
+
+  _.each(rootVariants, function(root) {
+    var rootVariants = findRootBlockVariants(root, options);
+
+    // Exclude non-folded modified roots
+    _.each(_.drop(rootVariants), function(root) {
+      excludeHashes.push({hash: utils.node.calculateNodeHash(root)});
+    });
+
+    _.each(rootVariants, function(root) {
+      foldRootBlock(root, options, variants);
+      if (options.allowNestedBlocks) {
+        findNestedBlocks(root, options, variants);
+      }
+    });
   });
 
   return _.chain(variants)
@@ -255,9 +282,9 @@ function processTokens(root, options) {
     .each(function(item) {
       console.log(item.weight.toFixed(4),
         item.hash
-          .replace(/\[R\*[0-9]+\/R[PF]\:/g, '')
-          .replace(/B\*[0-9]+\/R[PF]\:/g, '')
-          .replace(/\]$/g, '')
+          .replace(/\[R\*[0-9]+\/R[PF]:/g, '')
+          .replace(/B\*[0-9]+\/R[PF]:/g, '')
+          .replace(/]$/g, '')
           .replace(/[0-9]+/g, '')
       );
     })

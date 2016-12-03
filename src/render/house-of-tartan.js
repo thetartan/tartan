@@ -4,6 +4,8 @@ var _ = require('lodash');
 var canvas = require('./canvas');
 var defaults = require('../defaults');
 
+/* global Image */
+
 var shadow = new Image();
 shadow.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAAD' +
   'ED76LAAAABHNCSVQICAgIfAhkiAAAAFVJREFUGJV1jsENgEAIBGcTCvBrJbbi90qgEuu6buw' +

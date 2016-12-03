@@ -46,8 +46,8 @@ function calculateNodeHash(node) {
         _.chain(node.items)
           .map(calculateNodeHash)
           .join('')
-          .value()
-        + ']';
+          .value() +
+        ']';
     }
   }
   return '';
