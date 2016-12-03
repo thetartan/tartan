@@ -6,7 +6,6 @@ var utils = require('../utils');
 var defaultOptions = {
   // treat root block as infinite - may detect non-obvious folds
   allowRootReorder: true,
-  // TODO: Use this ^ option also when searching nested blocks
 
   // Enables extended mode - search of sub-blocks
   allowNestedBlocks: false, // fold only root
@@ -72,30 +71,59 @@ function foldRootBlock(root, options, results) {
     return;
   }
 
+  var items = _.concat(root.items, root.items[0])
+  var resultItems = tryFoldBlock(items);
+  if (_.isArray(resultItems)) {
+    var result = _.clone(root);
+    result.items = resultItems;
+    result.reflect = true;
+    results.push({
+      node: result,
+      hash: utils.node.calculateNodeHash(result),
+      weight: options.calculateNodeWeight(result)
+    });
+  }
+}
+
+function findRootBlockVariants(root, options) {
+  var results = [root];
+
+  if (root.reflect || (root.items.length == 0) || !options.allowRootReorder) {
+    return results;
+  }
+
   var i;
   var items = _.clone(root.items);
 
-  for (i = 0; i < items.length; i++) {
-    var resultItems = tryFoldBlock(_.concat(items, items[0]));
-    if (_.isArray(resultItems)) {
-      var result = _.clone(root);
-      result.items = resultItems;
-      result.reflect = true;
-      results.push({
-        node: result,
-        hash: utils.node.calculateNodeHash(result),
-        weight: options.calculateNodeWeight(result)
-      });
-    }
-
-    if (!options.allowRootReorder) {
-      break;
-    }
-
+  for (i = 0; i < items.length - 1; i++) {
     // Move first node to the end
     var temp = items[0];
     items.splice(0, 1);
     items.push(temp);
+
+    var result = _.clone(root);
+    result.items = _.clone(items);
+    results.push(result);
+  }
+
+  return results;
+}
+
+function findAllPossibleVariants(items, options, results) {
+  results.push(items);
+  if (items.length >= options.minBlockSize * 2 - 1) {
+    var from = options.minBlockSize - 1;
+    var to = items.length - options.minBlockSize;
+    for (var i = from; i <= to; i++) {
+      tryFindNestedBlocks(i, items, _.extend(options, {
+        allowSplitStripe: false
+      }), results);
+      if (options.allowSplitStripe) {
+        tryFindNestedBlocks(i, items, _.extend(options, {
+          allowSplitStripe: true
+        }), results);
+      }
+    }
   }
 }
 
@@ -109,31 +137,23 @@ function processNestedVariants(items, left, right, middle, appendToPrefix,
   if (appendToPrefix) {
     prefix.push(appendToPrefix);
   }
-  prefix.push(utils.node.newBlock(middle, true));
+
+  var middleVariants = [];
+  findAllPossibleVariants(middle, options, middleVariants);
 
   var suffix = items.slice(right, items.length);
   if (prependToSuffix) {
     suffix.splice(0, 0, prependToSuffix);
   }
-  var variants = [suffix];
+  var suffixVariants = [];
+  findAllPossibleVariants(suffix, options, suffixVariants);
 
-  if (suffix.length >= options.minBlockSize * 2 - 1) {
-    var from = options.minBlockSize - 1;
-    var to = suffix.length - options.minBlockSize;
-    for (var i = from; i <= to; i++) {
-      tryFindNestedBlocks(i, suffix, _.extend(options, {
-        allowSplitStripe: false
-      }), variants);
-      if (options.allowSplitStripe) {
-        tryFindNestedBlocks(i, suffix, _.extend(options, {
-          allowSplitStripe: true
-        }), variants);
-      }
-    }
-  }
-
-  _.each(variants, function(variant) {
-    results.push(_.concat(prefix, variant));
+  _.each(suffixVariants, function(variant) {
+    _.each(middleVariants, function(middle) {
+      results.push(_.concat(prefix,
+        utils.node.newBlock(middle, true),
+        variant));
+    });
   });
 }
 
@@ -188,19 +208,9 @@ function findNestedBlocks(block, options, results) {
     return;
   }
 
-  var from = options.minBlockSize - 1;
-  var to = block.items.length - options.minBlockSize;
   var variants = [];
-  for (var i = from; i <= to; i++) {
-    tryFindNestedBlocks(i, block.items, _.extend(options, {
-      allowSplitStripe: false
-    }), variants);
-    if (options.allowSplitStripe) {
-      tryFindNestedBlocks(i, block.items, _.extend(options, {
-        allowSplitStripe: true
-      }), variants);
-    }
-  }
+  findAllPossibleVariants(block.items, options, variants);
+
   _.each(variants, function(variant) {
     var result = _.clone(block);
     result.items = variant;
@@ -219,12 +229,23 @@ function processTokens(root, options) {
     weight: utils.node.calculateNodeWeight(root)
   }];
 
-  foldRootBlock(root, options, variants);
-  if (options.allowNestedBlocks) {
-    findNestedBlocks(root, options, variants);
-  }
+  var rootVariants = findRootBlockVariants(root, options);
+  _.each(rootVariants, function(root) {
+    foldRootBlock(root, options, variants);
+    if (options.allowNestedBlocks) {
+      findNestedBlocks(root, options, variants);
+    }
+  });
+
+  // Exclude non-folded modified roots
+  var excludeHashes = _.map(_.drop(rootVariants), function(node) {
+    return {hash: utils.node.calculateNodeHash(node)};
+  });
 
   return _.chain(variants)
+    .differenceBy(excludeHashes, function(item) {
+      return item.hash;
+    })
     .uniqBy(function(item) {
       return item.hash;
     })
