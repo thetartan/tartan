@@ -99,6 +99,7 @@
     // editor.value = 'K30 B24 K6 B6 K6 B24 K30 G4';
 
     // editor.value = 'a1b1a1x1a1b1a1m1a1b1a1x1a1b1a1';
+    // editor.value = 'a1b1[a1b1c1b1a1]';
 
     var canvas = document.querySelector('#canvas-container canvas');
 
@@ -177,7 +178,7 @@
     (function(button) {
       var optimize = tartan.transform([
         tartan.transform.fold({
-          allowRootReorder: false,
+          allowRootReorder: true,
           allowNestedBlocks: true,
           maxFoldLevels: 2,
           minBlockSize: 2,

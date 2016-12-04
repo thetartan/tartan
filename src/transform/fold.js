@@ -25,7 +25,7 @@ var defaultOptions = {
   allowSplitStripe: true,
 
   // If sett already contains some nested blocks - try to fold them too
-  processExistingBlocks: false,
+  processExistingBlocks: true,
 
   // Evaluation function - should return a number that will be used to
   // compare blocks and choose the best variant
@@ -203,11 +203,13 @@ function tryFindNestedBlocks(index, items, options, results, level) {
     left--;
     right++;
 
-    processNestedVariants(items, left, right, middle,
-      appendToPrefix, prependToSuffix, options, results, level);
+    if (options.greedy) {
+      processNestedVariants(items, left, right, middle,
+        appendToPrefix, prependToSuffix, options, results, level);
+    }
   }
 
-  if (processLast) {
+  if (processLast || !options.greedy) {
     processNestedVariants(items, left, right, middle,
       appendToPrefix, prependToSuffix, options, results, level);
   }
@@ -236,20 +238,68 @@ function findNestedBlocks(block, options, results) {
 }
 
 function processExistingBlocks(root, options, results) {
-  // TODO: Implement
+  results.push(root);
+
+  if (
+    options.allowNestedBlocks && options.processExistingBlocks &&
+    options.maxFoldLevels > 1
+  ) {
+    var prefixes = [];
+    var suffix = [];
+
+    var modifiedOptions = _.clone(options);
+    // Nested blocks are not real roots, so do not use extended algorithm
+    modifiedOptions.allowRootReorder = false;
+    // We already drilled down one level
+    modifiedOptions.maxFoldLevels -= 1;
+
+    _.each(root.items, function(item) {
+      if (item.isBlock) {
+        // Calculate variants of item
+        item = _.clone(item);
+        item.isRoot = true;
+        var variants = processTokens(item, modifiedOptions, true);
+
+        // Merge previous prefixes, variants of current block and suffix
+        var temp = prefixes;
+        prefixes = [];
+        _.each(variants, function(variant) {
+          variant = _.clone(variant.node);
+          variant.isRoot = false;
+
+          if (temp.length > 0) {
+            _.each(temp, function(prefix) {
+              prefixes.push(_.concat(prefix, suffix, variant));
+            });
+          } else {
+            prefixes.push(_.concat(suffix, variant));
+          }
+        });
+
+        // Suffix is already merged, reset it
+        suffix = [];
+      } else {
+        suffix.push(item);
+      }
+    });
+
+    _.each(prefixes, function(prefix) {
+      var result = _.clone(root);
+      result.items = _.concat(prefix, suffix);
+      results.push(result);
+    });
+  }
 }
 
-function processTokens(root, options) {
+function processTokens(root, options, doNotLog) {
   var variants = [{
     node: root,
     hash: utils.node.calculateNodeHash(root),
     weight: utils.node.calculateNodeWeight(root)
   }];
 
-  var rootVariants = [root];
-  if (options.allowNestedBlocks && options.processExistingBlocks) {
-    processExistingBlocks(root, options, rootVariants);
-  }
+  var rootVariants = [];
+  processExistingBlocks(root, options, rootVariants);
 
   var excludeHashes = [];
 
@@ -280,13 +330,16 @@ function processTokens(root, options) {
       return item.weight;
     })
     .each(function(item) {
-      console.log(item.weight.toFixed(4),
-        item.hash
-          .replace(/\[R\*[0-9]+\/R[PF]:/g, '')
-          .replace(/B\*[0-9]+\/R[PF]:/g, '')
-          .replace(/]$/g, '')
-          .replace(/[0-9]+/g, '')
-      );
+      if (!doNotLog) {
+        // Debug code, let it be here for now
+        console.log(item.weight.toFixed(4),
+          item.hash
+            .replace(/\[R\*[0-9]+\/R[PF]:/g, '')
+            .replace(/B\*[0-9]+\/R[PF]:/g, '')
+            .replace(/]$/g, '')
+            .replace(/[0-9]+/g, '')
+        );
+      }
     })
     .value();
 }
@@ -296,13 +349,13 @@ function transform(sett, options) {
 
   var warpIsSameAsWeft = sett.warp === sett.weft;
   if (_.isObject(sett.warp)) {
-    result.warpVariants = processTokens(sett.warp, options);
+    result.warpVariants = processTokens(sett.warp, options, true);
   }
   if (_.isObject(sett.weft)) {
     if (warpIsSameAsWeft) {
       result.weftVariants = result.warpVariants;
     } else {
-      result.weftVariants = processTokens(sett.weft, options);
+      result.weftVariants = processTokens(sett.weft, options, true);
     }
   }
 

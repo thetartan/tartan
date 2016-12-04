@@ -59,7 +59,15 @@ function factory(options) {
   options.transformSyntaxTree = transform([
     options.transformSyntaxTree,
     transform.flatten(),
-    transform.fold()
+    transform.fold({
+      allowRootReorder: false,
+      allowNestedBlocks: false,
+      maxFoldLevels: 2,
+      minBlockSize: 3,
+      greedy: false,
+      allowSplitStripe: false,
+      processExistingBlocks: false
+    })
   ]);
 
   return render.format(options);

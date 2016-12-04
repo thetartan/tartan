@@ -46,7 +46,15 @@ function factory(options) {
 
   options.transformSyntaxTree = transform([
     options.transformSyntaxTree,
-    transform.fold()
+    transform.fold({
+      allowRootReorder: false,
+      allowNestedBlocks: false,
+      maxFoldLevels: 2,
+      minBlockSize: 3,
+      greedy: false,
+      allowSplitStripe: false,
+      processExistingBlocks: false
+    })
   ]);
 
   options.join = function(components) {
