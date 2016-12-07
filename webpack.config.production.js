@@ -9,7 +9,7 @@ var productionConfig = {
     filename: 'tartan.min.js',
     path: './dist'
   },
-  plugins:  [
+  plugins: [
     new webpack.optimize.UglifyJsPlugin({
       compressor: {
         screw_ie8: true,
