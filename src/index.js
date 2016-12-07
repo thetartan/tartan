@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 
-_.extend(module.exports, require('./package'));
+_.extend(module.exports, require('./@package'));
 
 module.exports.defaults = require('./defaults');
 module.exports.parse = require('./parse');

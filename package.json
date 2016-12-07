@@ -1,6 +1,6 @@
 {
   "name": "tartan",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "This library allows to parse tartan threadcount.",
   "keywords": [
     "tartan",
@@ -19,7 +19,7 @@
     "build:dist": "NODE_ENV=production webpack --hide-modules --config webpack.config.production.js",
     "build": "npm run build:dev && npm run build:dist",
     "prepublish": "npm run build",
-    "review": "eslint src"
+    "review": "eslint src webpack.config.base.js webpack.config.development.js webpack.config.production.js"
   },
   "author": {
     "name": "Levko Kravets",
