@@ -5,6 +5,10 @@ var webpack = require('webpack');
 module.exports = {
   entry: './src/index.js',
   devtool: 'source-map',
+  externals: {
+    // `require('lodash')` should use global var `_`
+    lodash: '_'
+  },
   module: {
     loaders: [
       { test: /\.html$/, loader: 'raw' },
