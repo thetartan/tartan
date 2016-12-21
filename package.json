@@ -1,6 +1,6 @@
 {
   "name": "tartan",
-  "version": "4.3.0",
+  "version": "5.0.0",
   "description": "This library allows to parse tartan threadcount.",
   "keywords": [
     "tartan",
@@ -13,7 +13,6 @@
     "npm": "^2.0.0"
   },
   "scripts": {
-    "start": "xdg-open index.html",
     "test": "mocha tests/*.js tests/*/*.js",
     "build:dev": "NODE_ENV=development webpack --hide-modules --config webpack.config.development.js",
     "build:dist": "NODE_ENV=production webpack --hide-modules --config webpack.config.production.js",
