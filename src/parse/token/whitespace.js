@@ -8,7 +8,7 @@ function parse(context, offset) {
   var chunkSize = 10;
   var result = '';
   while (true) {
-    var chunk = source.substr(offset, chunkSize);
+    var chunk = source.substr(offset + result.length, chunkSize);
     var matches = pattern.exec(chunk);
     if (!matches) {
       break;
