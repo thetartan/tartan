@@ -50,6 +50,12 @@ function factory(callback) {
     }
   };
 
+  result.flush = function() {
+    result.cancel();
+    repaint();
+    return this;
+  };
+
   result.cancel = function() {
     if (callbackId) {
       cancelAnimationFrame(callbackId);
